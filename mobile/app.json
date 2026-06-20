@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Outfit Combine",
+    "slug": "outfit-combine",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "outfitcombine",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.outfitcombine.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Kıyafet fotoğrafı çekmek için kamera erişimi gerekli.",
+        "NSPhotoLibraryUsageDescription": "Kıyafet fotoğrafı seçmek için galeri erişimi gerekli.",
+        "NSLocationWhenInUseUsageDescription": "Hava durumuna göre kombin önerisi için konum gerekli."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6366F1"
+      },
+      "package": "com.outfitcombine.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kıyafet fotoğrafı seçmek için galeri erişimi gerekli.",
+          "cameraPermission": "Kıyafet fotoğrafı çekmek için kamera erişimi gerekli."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366F1",
+          "defaultChannel": "default"
+        }
+      ],
+      "expo-font",
+      "expo-video"
+    ]
+  }
+}

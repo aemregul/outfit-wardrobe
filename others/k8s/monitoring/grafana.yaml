@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: outfit-combine
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus:9090
+        isDefault: true
+        access: proxy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: outfit-combine
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: default
+        folder: Outfit Combine
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-api-health
+  namespace: outfit-combine
+data:
+  api-health.json: |
+    {
+      "title": "Outfit Combine — API Health",
+      "uid": "outfit-api-health",
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Backend Up",
+          "targets": [{"expr": "up{job=\"backend\"}", "legendFormat": ""}],
+          "gridPos": {"x": 0, "y": 0, "w": 4, "h": 4}
+        },
+        {
+          "type": "graph",
+          "title": "Request Rate (req/s)",
+          "targets": [{"expr": "rate(http_server_requests_seconds_count[1m])", "legendFormat": "{{method}} {{uri}}"}],
+          "gridPos": {"x": 4, "y": 0, "w": 10, "h": 8}
+        },
+        {
+          "type": "graph",
+          "title": "P95 Latency",
+          "targets": [{"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))", "legendFormat": "p95"}],
+          "gridPos": {"x": 14, "y": 0, "w": 10, "h": 8}
+        },
+        {
+          "type": "graph",
+          "title": "5xx Error Rate",
+          "targets": [{"expr": "rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])", "legendFormat": "errors/s"}],
+          "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+        },
+        {
+          "type": "graph",
+          "title": "JVM Heap Usage",
+          "targets": [{"expr": "jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} * 100", "legendFormat": "heap %"}],
+          "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+        }
+      ],
+      "refresh": "30s",
+      "time": {"from": "now-1h", "to": "now"},
+      "schemaVersion": 38
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: outfit-combine
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.4.0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secret
+                  key: GRAFANA_ADMIN_PASSWORD
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboard-api-health
+              mountPath: /var/lib/grafana/dashboards
+            - name: storage
+              mountPath: /var/lib/grafana
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboard-provider
+          configMap:
+            name: grafana-dashboards-provider
+        - name: dashboard-api-health
+          configMap:
+            name: grafana-dashboard-api-health
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secret
+  namespace: outfit-combine
+type: Opaque
+stringData:
+  GRAFANA_ADMIN_PASSWORD: "CHANGE_ME"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: outfit-combine
+spec:
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000

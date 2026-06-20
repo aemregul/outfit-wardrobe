@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Expo / build output
+.expo/
+dist/
+web-build/
+
+# OS
+.DS_Store
+
+# Tooling state
+.claude-flow/
+
+# Local env
+.env
+.env.local

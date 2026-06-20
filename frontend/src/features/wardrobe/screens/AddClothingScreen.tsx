@@ -1,0 +1,335 @@
+import React, { useState } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  ScrollView, StyleSheet, ActivityIndicator,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { DashboardLayout } from '../../../shared/components/Layout/DashboardLayout';
+import { useCreateClothing } from '../hooks/useWardrobe';
+import { ImagePickerButton } from '../../../shared/components/ImagePickerButton';
+import {
+  ClothingCategory, ClothingSeason, ClothingStyle, ClothingItemRequest,
+  CLOTHING_CATEGORIES, CATEGORY_LABELS,
+  CLOTHING_SEASONS, CLOTHING_SEASON_LABELS,
+  CLOTHING_STYLES, CLOTHING_STYLE_LABELS,
+} from '../../../shared/types/clothing.types';
+
+const URL_RE = /^https?:\/\/.+\..+/i;
+
+export function AddClothingScreen() {
+  const navigation = useNavigation();
+  const { mutate: createClothing, isPending } = useCreateClothing();
+
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState<ClothingCategory | null>(null);
+  const [subCategory, setSubCategory] = useState('');
+  const [brand, setBrand] = useState('');
+  const [size, setSize] = useState('');
+  const [colors, setColors] = useState('');
+  const [selectedSeasons, setSelectedSeasons] = useState<ClothingSeason[]>([]);
+  const [selectedStyles, setSelectedStyles] = useState<ClothingStyle[]>([]);
+  const [material, setMaterial] = useState('');
+  const [pattern, setPattern] = useState('');
+  const [productUrl, setProductUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [notes, setNotes] = useState('');
+  const [error, setError] = useState('');
+
+  function toggleSeason(s: ClothingSeason) {
+    setSelectedSeasons((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
+  }
+
+  function toggleStyle(st: ClothingStyle) {
+    setSelectedStyles((prev) =>
+      prev.includes(st) ? prev.filter((x) => x !== st) : [...prev, st]
+    );
+  }
+
+  function handleSubmit() {
+    setError('');
+    if (!name.trim()) { setError('Kıyafet adı zorunludur.'); return; }
+    if (!category) { setError('Kategori seçimi zorunludur.'); return; }
+    if (imageUrl.trim() && !URL_RE.test(imageUrl.trim())) {
+      setError('Fotoğraf URL geçerli bir adres olmalıdır (https://...).');
+      return;
+    }
+    if (productUrl.trim() && !URL_RE.test(productUrl.trim())) {
+      setError('Ürün URL geçerli bir adres olmalıdır (https://...).');
+      return;
+    }
+
+    const payload: ClothingItemRequest = {
+      name: name.trim(),
+      category,
+      subCategory: subCategory.trim() || undefined,
+      brand: brand.trim() || undefined,
+      size: size.trim() || undefined,
+      colors: colors.trim() ? colors.split(',').map((c) => c.trim()).filter(Boolean) : undefined,
+      seasons: selectedSeasons.length ? selectedSeasons : undefined,
+      styles: selectedStyles.length ? selectedStyles : undefined,
+      material: material.trim() || undefined,
+      pattern: pattern.trim() || undefined,
+      productUrl: productUrl.trim() || undefined,
+      imageUrl: imageUrl.trim() || undefined,
+      notes: notes.trim() || undefined,
+    };
+
+    createClothing(payload, {
+      onSuccess: () => navigation.goBack(),
+      onError: (err: any) => {
+        setError(err?.response?.data?.message ?? 'Bir hata oluştu.');
+      },
+    });
+  }
+
+  return (
+    <DashboardLayout>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backBtn}>← Geri</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Kıyafet Ekle</Text>
+        </View>
+
+        {/* Name */}
+        <FormField label="Kıyafet Adı *">
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Örn: Siyah Blazer"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Category */}
+        <FormField label="Kategori *">
+          <View style={styles.chipGrid}>
+            {CLOTHING_CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.chip, category === cat && styles.chipActive]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text style={[styles.chipText, category === cat && styles.chipTextActive]}>
+                  {CATEGORY_LABELS[cat]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </FormField>
+
+        {/* Sub-category */}
+        <FormField label="Alt Kategori">
+          <TextInput
+            style={styles.input}
+            value={subCategory}
+            onChangeText={setSubCategory}
+            placeholder="Örn: Polo, Kapüşonlu"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Brand */}
+        <FormField label="Marka">
+          <TextInput
+            style={styles.input}
+            value={brand}
+            onChangeText={setBrand}
+            placeholder="Örn: Zara"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Size */}
+        <FormField label="Beden">
+          <TextInput
+            style={styles.input}
+            value={size}
+            onChangeText={setSize}
+            placeholder="Örn: M, 38, L"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Colors */}
+        <FormField label="Renkler (virgülle ayırın)">
+          <TextInput
+            style={styles.input}
+            value={colors}
+            onChangeText={setColors}
+            placeholder="Örn: Siyah, Beyaz"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Seasons */}
+        <FormField label="Mevsimler">
+          <View style={styles.chipGrid}>
+            {CLOTHING_SEASONS.map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={[styles.chip, selectedSeasons.includes(s) && styles.chipActive]}
+                onPress={() => toggleSeason(s)}
+              >
+                <Text style={[styles.chipText, selectedSeasons.includes(s) && styles.chipTextActive]}>
+                  {CLOTHING_SEASON_LABELS[s]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </FormField>
+
+        {/* Styles */}
+        <FormField label="Stiller">
+          <View style={styles.chipGrid}>
+            {CLOTHING_STYLES.map((st) => (
+              <TouchableOpacity
+                key={st}
+                style={[styles.chip, selectedStyles.includes(st) && styles.chipActive]}
+                onPress={() => toggleStyle(st)}
+              >
+                <Text style={[styles.chipText, selectedStyles.includes(st) && styles.chipTextActive]}>
+                  {CLOTHING_STYLE_LABELS[st]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </FormField>
+
+        {/* Material */}
+        <FormField label="Kumaş">
+          <TextInput
+            style={styles.input}
+            value={material}
+            onChangeText={setMaterial}
+            placeholder="Örn: Pamuk, Polyester"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Pattern */}
+        <FormField label="Desen">
+          <TextInput
+            style={styles.input}
+            value={pattern}
+            onChangeText={setPattern}
+            placeholder="Örn: Düz, Çizgili, Çiçekli"
+            placeholderTextColor="#9CA3AF"
+          />
+        </FormField>
+
+        {/* Product URL */}
+        <FormField label="Ürün URL">
+          <TextInput
+            style={styles.input}
+            value={productUrl}
+            onChangeText={setProductUrl}
+            placeholder="https://..."
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+        </FormField>
+
+        {/* Image Upload */}
+        <FormField label="Fotoğraf">
+          <ImagePickerButton
+            folder="clothing"
+            currentUrl={imageUrl || undefined}
+            onUploaded={(url) => setImageUrl(url)}
+          />
+          <TextInput
+            style={styles.input}
+            value={imageUrl}
+            onChangeText={setImageUrl}
+            placeholder="veya URL girin (https://...)"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+        </FormField>
+
+        {/* Notes */}
+        <FormField label="Notlar">
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="İsteğe bağlı notlar..."
+            placeholderTextColor="#9CA3AF"
+            multiline
+            numberOfLines={3}
+          />
+        </FormField>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.submitBtn, isPending && styles.submitBtnDisabled]}
+          onPress={handleSubmit}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitBtnText}>Dolaba Ekle</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </DashboardLayout>
+  );
+}
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: { flex: 1 },
+  container: { padding: 28, maxWidth: 640, width: '100%', paddingBottom: 48 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 28 },
+  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
+  title: { fontSize: 22, fontWeight: '700', color: '#1E1B4B' },
+  field: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#111827',
+  },
+  textArea: { minHeight: 80, textAlignVertical: 'top', paddingTop: 10 },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  chipActive: { backgroundColor: '#6366F1' },
+  chipText: { fontSize: 13, color: '#6366F1', fontWeight: '500' },
+  chipTextActive: { color: '#fff' },
+  errorText: { color: '#EF4444', fontSize: 14, marginBottom: 12 },
+  submitBtn: {
+    backgroundColor: '#6366F1',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitBtnDisabled: { backgroundColor: '#A5B4FC' },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+});

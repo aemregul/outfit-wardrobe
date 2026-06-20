@@ -1,0 +1,19 @@
+# Component repos (tracked in their own repositories)
+outfit-combine_backend/
+outfit-combine_frontend_web/
+outfit-combine_frontend_mobile/
+
+# AI tooling state / local caches
+.claude/
+.claude-flow/
+.swarm/
+ruvector.db
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+
+# Local env
+.env

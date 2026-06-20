@@ -1,0 +1,136 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: outfit_postgres
+    environment:
+      POSTGRES_DB: outfit_combine
+      POSTGRES_USER: outfit_user
+      POSTGRES_PASSWORD: outfit_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - outfit_postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U outfit_user -d outfit_combine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: outfit_keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/outfit_combine
+      KC_DB_USERNAME: outfit_user
+      KC_DB_PASSWORD: outfit_password
+      KC_DB_SCHEMA: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && exec 3>&- || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  minio:
+    image: minio/minio:latest
+    container_name: outfit_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - outfit_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: outfit_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minio minio_password &&
+      mc mb --ignore-existing local/outfit-combine &&
+      mc anonymous set public local/outfit-combine &&
+      echo 'MinIO bucket outfit-combine initialized'
+      "
+
+  backend:
+    build:
+      context: ./outfit-combine_backend
+      dockerfile: Dockerfile
+    container_name: outfit_backend
+    restart: on-failure
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: outfit_combine
+      DB_USER: outfit_user
+      DB_PASSWORD: outfit_password
+      KEYCLOAK_ISSUER_URI: http://localhost:8081/realms/outfit-combine
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/outfit-combine/protocol/openid-connect/certs
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio_password
+      MINIO_BUCKET: outfit-combine
+      MINIO_PUBLIC_URL: http://localhost:9000
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  frontend_web:
+    build:
+      context: ./outfit-combine_frontend_web
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: http://localhost:8080/api/v1
+        EXPO_PUBLIC_KEYCLOAK_URL: http://localhost:8081
+        EXPO_PUBLIC_KEYCLOAK_REALM: outfit-combine
+        EXPO_PUBLIC_KEYCLOAK_CLIENT_ID: outfit-combine-web
+    container_name: outfit_frontend_web
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  outfit_postgres_data:
+  outfit_minio_data:

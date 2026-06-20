@@ -1,0 +1,59 @@
+name: CD — Staging Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./outfit-combine_backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:${{ github.sha }},ghcr.io/${{ github.repository }}/backend:latest
+
+      - name: Build & push frontend-web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./outfit-combine_frontend_web
+          push: true
+          tags: ghcr.io/${{ github.repository }}/frontend-web:${{ github.sha }},ghcr.io/${{ github.repository }}/frontend-web:latest
+          build-args: |
+            EXPO_PUBLIC_API_URL=${{ vars.STAGING_API_URL }}
+            EXPO_PUBLIC_KEYCLOAK_URL=${{ vars.STAGING_KEYCLOAK_URL }}
+            EXPO_PUBLIC_KEYCLOAK_REALM=outfit-combine
+            EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=outfit-combine-web
+
+  # Uncomment and configure when staging server is ready:
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   environment: staging
+  #   steps:
+  #     - name: Deploy via SSH
+  #       uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.STAGING_HOST }}
+  #         username: ${{ secrets.STAGING_USER }}
+  #         key: ${{ secrets.STAGING_SSH_KEY }}
+  #         script: |
+  #           cd /opt/outfit-combine
+  #           docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+  #           docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d

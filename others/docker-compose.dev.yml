@@ -1,0 +1,44 @@
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  keycloak:
+    ports:
+      - "8081:8080"
+
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  backend:
+    build:
+      context: ./outfit-combine_backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_OUTFITCOMBINE: DEBUG
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - maven_cache:/root/.m2
+
+  frontend_web:
+    build:
+      context: ./outfit-combine_frontend_web
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: http://localhost:8080/api/v1
+        EXPO_PUBLIC_KEYCLOAK_URL: http://localhost:8081
+        EXPO_PUBLIC_KEYCLOAK_REALM: outfit-combine
+        EXPO_PUBLIC_KEYCLOAK_CLIENT_ID: outfit-combine-web
+    ports:
+      - "3000:80"
+
+volumes:
+  maven_cache:

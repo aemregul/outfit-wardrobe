@@ -1,0 +1,17 @@
+# Build
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Tooling state
+.claude-flow/
+
+# Local env
+.env

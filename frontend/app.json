@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Outfit Combine",
+    "slug": "outfit-combine-web",
+    "version": "1.0.0",
+    "platforms": ["web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "extra": {
+      "apiUrl": "http://localhost:8080/api/v1",
+      "keycloakUrl": "http://localhost:8081",
+      "keycloakRealm": "outfit-combine",
+      "keycloakClientId": "outfit-combine-web"
+    }
+  }
+}

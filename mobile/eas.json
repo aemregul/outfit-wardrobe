@@ -1,0 +1,61 @@
+{
+  "cli": {
+    "version": ">= 10.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-staging.outfitcombine.app/api/v1",
+        "EXPO_PUBLIC_KEYCLOAK_URL": "https://auth-staging.outfitcombine.app",
+        "EXPO_PUBLIC_KEYCLOAK_REALM": "outfit-combine",
+        "EXPO_PUBLIC_KEYCLOAK_CLIENT_ID": "outfit-combine-mobile"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.outfitcombine.app/api/v1",
+        "EXPO_PUBLIC_KEYCLOAK_URL": "https://auth.outfitcombine.app",
+        "EXPO_PUBLIC_KEYCLOAK_REALM": "outfit-combine",
+        "EXPO_PUBLIC_KEYCLOAK_CLIENT_ID": "outfit-combine-mobile"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "CHANGE_ME",
+        "ascAppId": "CHANGE_ME",
+        "appleTeamId": "CHANGE_ME"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production"
+      }
+    }
+  }
+}

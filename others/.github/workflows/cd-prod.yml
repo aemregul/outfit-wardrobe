@@ -1,0 +1,98 @@
+name: CD — Production Deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract tag version
+        id: meta
+        run: echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./outfit-combine_backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/backend:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ github.repository }}/backend:stable
+
+      - name: Build & push frontend-web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./outfit-combine_frontend_web
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend-web:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ github.repository }}/frontend-web:stable
+          build-args: |
+            EXPO_PUBLIC_API_URL=${{ vars.PROD_API_URL }}
+            EXPO_PUBLIC_KEYCLOAK_URL=${{ vars.PROD_KEYCLOAK_URL }}
+            EXPO_PUBLIC_KEYCLOAK_REALM=outfit-combine
+            EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=outfit-combine-web
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update backend image
+        run: |
+          kubectl set image deployment/backend \
+            backend=ghcr.io/${{ github.repository }}/backend:${{ needs.build-and-push.outputs.image_tag }} \
+            -n outfit-combine
+
+      - name: Update frontend-web image
+        run: |
+          kubectl set image deployment/frontend-web \
+            frontend-web=ghcr.io/${{ github.repository }}/frontend-web:${{ needs.build-and-push.outputs.image_tag }} \
+            -n outfit-combine
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/backend -n outfit-combine --timeout=120s
+          kubectl rollout status deployment/frontend-web -n outfit-combine --timeout=120s
+
+      - name: Smoke test
+        run: |
+          BACKEND_URL="${{ vars.PROD_API_URL }}"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${BACKEND_URL}/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Smoke test failed — backend returned HTTP $STATUS"
+            kubectl rollout undo deployment/backend -n outfit-combine
+            kubectl rollout undo deployment/frontend-web -n outfit-combine
+            exit 1
+          fi
+          echo "Smoke test passed — HTTP $STATUS"
