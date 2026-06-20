@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(mv \"openart-image_1781358358420_979c9e7c_1781358358477_1efc4ffd.png\" \"casual\\(gündelik\\).png\")",
+      "Bash(mv \"openart-image_1781358817087_1da51f1b_1781358817136_6e76b94c.png\" \"streetwear.png\")",
+      "Bash(mv \"openart-image_1781358919379_4aa40caa_1781358919414_fa42b3e8.png\" \"sportif.png\")",
+      "Bash(mv \"openart-image_1781359097306_cadd53da_1781359097366_46a25a73.png\" \"smart casual.png\")",
+      "Bash(mv \"openart-image_1781359588295_b5c0398b_1781359588397_fca13101.png\" \"minimalist.png\")",
+      "Bash(mv \"openart-image_1781358569377_388f50d2_1781358569566_859e1752.png\" \"casual\\(gündelik\\).png\")",
+      "Bash(mv \"openart-image_1781358770064_5bae515b_1781358770107_ebac2497.png\" \"streetwear.png\")",
+      "Bash(mv \"openart-image_1781358967545_99967cc4_1781358967622_29787c06.png\" \"sportif.png\")",
+      "Bash(mv \"openart-image_1781359027697_71bfca98_1781359027861_8e84ea9a.png\" \"smart casual.png\")",
+      "Bash(mv \"openart-image_1781359418222_5190d86e_1781359418253_c7a5d579.png\" \"business\\(ofis\\).png\")",
+      "Bash(npx tsc *)",
+      "Bash(cd \"/c/Users/Ardae/outfit/mobile\" && ls \"assets/images/cinsiyet\")",
+      "Read(//c/c/Users/Ardae/outfit/mobile/assets/images/**)"
+    ]
+  }
+}
