@@ -23,7 +23,7 @@ type TabConfig = {
 
 const TAB_CONFIG: Record<string, TabConfig> = {
   OutfitList:   { family: 'Ionicons', icon: 'grid',      label: 'Akış' },
-  WardrobeList: { family: 'MaterialCommunityIcons', icon: 'hanger', label: 'Gardırop' },
+  WardrobeList: { family: 'MaterialCommunityIcons', icon: 'hanger', label: 'Dolap' },
   Feed:         { family: 'Ionicons', icon: 'home',       label: 'Ana Sayfa' },
   WearLogList:  { family: 'Ionicons', icon: 'sparkles',   label: 'Yapay Zeka' },
   Profile:      { family: 'Ionicons', icon: 'person',     label: 'Profil' },

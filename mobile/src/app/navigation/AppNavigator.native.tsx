@@ -9,6 +9,7 @@ import { Splash } from '../../features/auth/screens/Splash';
 import { Onboarding } from '../../features/onboarding/screens/Onboarding';
 import { LoginScreen } from '../../features/auth/screens/LoginScreen';
 import { ProfileSetup } from '../../features/profile-setup/screens/ProfileSetup';
+import { AddClothingScreen } from '../../features/wardrobe/screens/AddClothingScreen';
 import { ClothingDetailScreen } from '../../features/wardrobe/screens/ClothingDetailScreen';
 import { OutfitDetailScreen } from '../../features/outfits/screens/OutfitDetailScreen';
 import { PostDetailScreen } from '../../features/social/screens/PostDetailScreen';
@@ -92,6 +93,7 @@ export function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="ProfileSetup" component={ProfileSetup} />
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="AddClothing" component={AddClothingScreen} options={{ presentation: 'modal' }} />
           <Stack.Screen name="ClothingDetail" component={ClothingDetailScreen} />
           <Stack.Screen name="OutfitDetail" component={OutfitDetailScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />

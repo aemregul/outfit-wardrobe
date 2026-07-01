@@ -1,7 +1,10 @@
 import React from 'react';
 import {
-  View, Text, Image, TouchableOpacity, ScrollView, StyleSheet,
+  View, Text, Image, Pressable, TouchableOpacity, ScrollView, StyleSheet,
 } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring,
+} from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,12 +29,32 @@ const RECENT_ITEMS = [
   { id: '3', image: shirtImage, name: 'İpek Bluz', category: 'Üstler' },
 ];
 
-const QUICK_ACTIONS: { icon: React.ComponentProps<typeof Ionicons>['name'] | null; label: string }[] = [
-  { icon: 'scan-outline', label: 'Yeni Kıyafet Tara' },
+const QUICK_ACTIONS: { icon: React.ComponentProps<typeof Ionicons>['name'] | null; label: string; route?: string }[] = [
+  { icon: 'scan-outline', label: 'Yeni Kıyafet Tara', route: 'AddClothing' },
   { icon: 'calendar-outline', label: 'Haftayı Planla' },
   { icon: 'sparkles', label: 'AI ile Sohbet' },
   { icon: null, label: '' },
 ];
+
+function WeatherPill({ onPress }: { onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Pressable
+      onPressIn={() => { scale.value = withSpring(0.92, { damping: 15, stiffness: 300 }); }}
+      onPressOut={() => { scale.value = withSpring(1.04, { damping: 10, stiffness: 300 }); }}
+      onPress={onPress}
+    >
+      <Animated.View style={[styles.weatherPill, animStyle]}>
+        <Ionicons name="sunny" size={18} color="#C9A86A" />
+        <Text style={styles.weatherText}>Güneşli, 29°C</Text>
+        <View style={styles.weatherDivider} />
+        <Text style={styles.locationText}>Ataşehir</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export function HomeScreen() {
   const navigation = useNavigation<AppNavigationProp>();
@@ -66,12 +89,7 @@ export function HomeScreen() {
       </View>
 
       {/* Weather Pill */}
-      <View style={styles.weatherPill}>
-        <Ionicons name="sunny" size={18} color="#C9A86A" />
-        <Text style={styles.weatherText}>Güneşli, 29°C</Text>
-        <View style={styles.weatherDivider} />
-        <Text style={styles.locationText}>Ataşehir</Text>
-      </View>
+      <WeatherPill onPress={() => navigation.navigate('WeatherDetail')} />
 
       {/* Bugünün Görünümü */}
       <View style={styles.sectionHeader}>
@@ -106,7 +124,11 @@ export function HomeScreen() {
       <View style={styles.quickActionsRow}>
         {QUICK_ACTIONS.map((action, index) => (
           <View key={index} style={styles.quickActionItem}>
-            <TouchableOpacity style={styles.quickActionBtn} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.quickActionBtn}
+              activeOpacity={0.85}
+              onPress={action.route ? () => (navigation.navigate as (s: string) => void)(action.route!) : undefined}
+            >
               {action.icon && (
                 <View style={styles.quickActionCircle}>
                   <Ionicons name={action.icon} size={24} color="#C9A86A" />
@@ -251,37 +273,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: 'rgba(201,168,106,0.1)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(201,168,106,0.45)',
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginTop: 16,
     gap: 6,
     shadowColor: '#C9A86A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.30,
+    shadowRadius: 10,
+    elevation: 4,
   },
   weatherText: {
     fontFamily: 'Poppins_500Medium',
     fontSize: 14,
     lineHeight: 20,
-    color: '#1F1F1F',
+    color: '#4A403A',
   },
   weatherDivider: {
     width: 1,
     height: 16,
-    backgroundColor: 'rgba(212,163,115,0.2)',
+    backgroundColor: 'rgba(201,168,106,0.4)',
     marginHorizontal: 2,
   },
   locationText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     lineHeight: 16,
-    color: '#6E655C',
+    color: '#9C8C84',
   },
 
   // Section

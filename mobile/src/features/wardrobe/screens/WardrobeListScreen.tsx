@@ -1,24 +1,90 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  ActivityIndicator, StyleSheet, ScrollView, TextInput,
+  View, Text, Image, TextInput, TouchableOpacity,
+  FlatList, ActivityIndicator, StyleSheet, ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '../../../shared/constants/queryKeys';
-import { ClothingCard } from '../components/ClothingCard';
-import { useInfiniteWardrobe, useDeleteClothing, useMarkClean, useMarkDirty } from '../hooks/useWardrobe';
+import { Ionicons } from '@expo/vector-icons';
 import {
-  ClothingCategory, ClothingSeason, ClothingStyle,
+  useFonts as usePoppins,
+  Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
+import {
+  useFonts as usePlayfair,
+  PlayfairDisplay_600SemiBold,
+} from '@expo-google-fonts/playfair-display';
+import { QUERY_KEYS } from '../../../shared/constants/queryKeys';
+import { useInfiniteWardrobe, useDeleteClothing } from '../hooks/useWardrobe';
+import {
+  ClothingCategory, ClothingItemResponse,
   CLOTHING_CATEGORIES, CATEGORY_LABELS,
-  CLOTHING_SEASONS, CLOTHING_SEASON_LABELS,
-  CLOTHING_STYLES, CLOTHING_STYLE_LABELS,
 } from '../../../shared/types/clothing.types';
+import type { AppNavigationProp } from '../../../app/navigation/types';
 
+const MOCK_ITEMS: ClothingItemResponse[] = [
+  { id: 'm1', userId: '', name: 'İpek Bluz',      imageUrl: undefined, category: 'TOP',       brand: 'Zara',     isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Üstler' },
+  { id: 'm2', userId: '', name: 'Bej Trenç',      imageUrl: undefined, category: 'OUTERWEAR', brand: 'Burberry', isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Dış Giyim' },
+  { id: 'm3', userId: '', name: 'Klasik Ayakkabı',imageUrl: undefined, category: 'SHOES',     brand: 'Nike',     isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Ayakkabı' },
+  { id: 'm4', userId: '', name: 'Altın Zincir',   imageUrl: undefined, category: 'JEWELRY',   brand: 'Mejuri',   isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Aksesuar' },
+  { id: 'm5', userId: '', name: 'Düz Bacak Kot',  imageUrl: undefined, category: 'BOTTOM',    brand: "Levi's",   isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Altlar' },
+  { id: 'm6', userId: '', name: 'Keten Gömlek',   imageUrl: undefined, category: 'TOP',       brand: 'Uniqlo',   isClean: true, wearCount: 0, createdAt: '', updatedAt: '', subCategory: 'Üstler' },
+];
+
+const MOCK_IMAGES: Record<string, any> = {
+  m1: require('../../../../assets/images/main/Summer Shirt.png'),
+  m2: require('../../../../assets/images/kadın/smart casual.jpg'),
+  m3: require('../../../../assets/images/main/White sneakers.png'),
+  m4: require('../../../../assets/images/main/Gold necklace.png'),
+  m5: require('../../../../assets/images/kadın/casual(gündelik).jpg'),
+  m6: require('../../../../assets/images/main/Summer Shirt.png'),
+};
+
+const CHIPS: { key: ClothingCategory | null; label: string }[] = [
+  { key: null, label: 'Tüm Ürünler' },
+  ...CLOTHING_CATEGORIES.map(cat => ({ key: cat, label: CATEGORY_LABELS[cat] })),
+];
+
+// ── Kıyafet kartı ──────────────────────────────────────────────
+function ClothingCardNew({
+  item,
+  localImage,
+  onPress,
+}: {
+  item: ClothingItemResponse;
+  localImage?: any;
+  onPress: () => void;
+}) {
+  const subtitle = [CATEGORY_LABELS[item.category], item.brand].filter(Boolean).join(' • ');
+  const imageSource = item.imageUrl ? { uri: item.imageUrl } : localImage;
+
+  return (
+    <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={onPress}>
+      <View style={styles.cardImageWrap}>
+        {imageSource ? (
+          <Image source={imageSource} style={styles.cardImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.cardImagePlaceholder} />
+        )}
+      </View>
+      <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
+      <Text style={styles.cardSubtitle} numberOfLines={1}>{subtitle}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ── Ana ekran ──────────────────────────────────────────────────
 export function WardrobeListScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<AppNavigationProp>();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<ClothingCategory | null>(null);
+
+  const [poppinsLoaded] = usePoppins({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold });
+  const [playfairLoaded] = usePlayfair({ PlayfairDisplay_600SemiBold });
 
   useFocusEffect(
     useCallback(() => {
@@ -26,32 +92,16 @@ export function WardrobeListScreen() {
     }, [queryClient]),
   );
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<ClothingCategory | null>(null);
-  const [isCleanFilter, setIsCleanFilter] = useState<boolean | null>(null);
-  const [seasonFilter, setSeasonFilter] = useState<ClothingSeason | null>(null);
-  const [styleFilter, setStyleFilter] = useState<ClothingStyle | null>(null);
-
   const filterParams = useMemo(() => ({
     ...(categoryFilter && { category: categoryFilter }),
-    ...(isCleanFilter !== null && { isClean: isCleanFilter }),
-    ...(seasonFilter && { season: seasonFilter }),
-    ...(styleFilter && { style: styleFilter }),
-  }), [categoryFilter, isCleanFilter, seasonFilter, styleFilter]);
+  }), [categoryFilter]);
 
   const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    isError,
-    refetch,
+    data, isLoading, isFetchingNextPage,
+    fetchNextPage, hasNextPage, isError,
   } = useInfiniteWardrobe(filterParams);
 
-  const { mutate: deleteItem } = useDeleteClothing();
-  const { mutate: markClean } = useMarkClean();
-  const { mutate: markDirty } = useMarkDirty();
+  useDeleteClothing();
 
   const serverItems = useMemo(
     () => data?.pages.flatMap(page => page.data.content) ?? [],
@@ -63,261 +113,326 @@ export function WardrobeListScreen() {
     const q = searchQuery.trim().toLowerCase();
     return serverItems.filter(item =>
       item.name.toLowerCase().includes(q) ||
-      item.brand?.toLowerCase().includes(q) ||
-      item.subCategory?.toLowerCase().includes(q),
+      item.brand?.toLowerCase().includes(q),
     );
   }, [serverItems, searchQuery]);
 
   const totalCount = data?.pages[0]?.data.totalElements ?? 0;
-
-  const hasActiveFilters =
-    searchQuery.trim() !== '' ||
-    categoryFilter !== null ||
-    isCleanFilter !== null ||
-    seasonFilter !== null ||
-    styleFilter !== null;
+  const displayItems = (isError || filteredItems.length === 0) && !isLoading
+    ? MOCK_ITEMS
+    : filteredItems;
+  const isMock = displayItems === MOCK_ITEMS;
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  function clearFilters() {
-    setSearchQuery('');
-    setCategoryFilter(null);
-    setIsCleanFilter(null);
-    setSeasonFilter(null);
-    setStyleFilter(null);
-  }
-
-  const renderFooter = useCallback(() => (
-    <View style={styles.footer}>
-      {isFetchingNextPage
-        ? <ActivityIndicator size="small" color="#6366F1" />
-        : !hasNextPage && filteredItems.length > 0
-          ? <Text style={styles.footerText}>Tüm sonuçlar yüklendi</Text>
-          : null}
-    </View>
-  ), [isFetchingNextPage, hasNextPage, filteredItems.length]);
+  if (!poppinsLoaded || !playfairLoaded) return <View style={styles.container} />;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Dolabım</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddClothing' as never)}>
-            <Text style={styles.addBtnText}>+ Ekle</Text>
-          </TouchableOpacity>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Gardırop</Text>
+          <Text style={styles.subtitle}>Toplam {isMock ? MOCK_ITEMS.length : totalCount} ürün</Text>
         </View>
-
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Kıyafet adı, marka ara..."
-          placeholderTextColor="#9CA3AF"
-        />
-
-        <View style={styles.filtersSection}>
-          <Text style={styles.filterLabel}>Kategori</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.chipRow}>
-              <TouchableOpacity
-                style={[styles.chip, categoryFilter === null && styles.chipActive]}
-                onPress={() => setCategoryFilter(null)}
-              >
-                <Text style={[styles.chipText, categoryFilter === null && styles.chipTextActive]}>Tümü</Text>
-              </TouchableOpacity>
-              {CLOTHING_CATEGORIES.map(cat => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[styles.chip, categoryFilter === cat && styles.chipActive]}
-                  onPress={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
-                >
-                  <Text style={[styles.chipText, categoryFilter === cat && styles.chipTextActive]}>
-                    {CATEGORY_LABELS[cat]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          <Text style={styles.filterLabel}>Durum</Text>
-          <View style={styles.chipRow}>
-            {([null, true, false] as const).map(val => (
-              <TouchableOpacity
-                key={String(val)}
-                style={[styles.chip, isCleanFilter === val && styles.chipActive]}
-                onPress={() => setIsCleanFilter(isCleanFilter === val ? null : val)}
-              >
-                <Text style={[styles.chipText, isCleanFilter === val && styles.chipTextActive]}>
-                  {val === null ? 'Hepsi' : val ? 'Temiz' : 'Kirli'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.filterLabel}>Mevsim</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.chipRow}>
-              <TouchableOpacity
-                style={[styles.chip, seasonFilter === null && styles.chipActive]}
-                onPress={() => setSeasonFilter(null)}
-              >
-                <Text style={[styles.chipText, seasonFilter === null && styles.chipTextActive]}>Tümü</Text>
-              </TouchableOpacity>
-              {CLOTHING_SEASONS.map(s => (
-                <TouchableOpacity
-                  key={s}
-                  style={[styles.chip, seasonFilter === s && styles.chipActive]}
-                  onPress={() => setSeasonFilter(seasonFilter === s ? null : s)}
-                >
-                  <Text style={[styles.chipText, seasonFilter === s && styles.chipTextActive]}>
-                    {CLOTHING_SEASON_LABELS[s]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          <Text style={styles.filterLabel}>Stil</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.chipRow}>
-              <TouchableOpacity
-                style={[styles.chip, styleFilter === null && styles.chipActive]}
-                onPress={() => setStyleFilter(null)}
-              >
-                <Text style={[styles.chipText, styleFilter === null && styles.chipTextActive]}>Tümü</Text>
-              </TouchableOpacity>
-              {CLOTHING_STYLES.map(st => (
-                <TouchableOpacity
-                  key={st}
-                  style={[styles.chip, styleFilter === st && styles.chipActive]}
-                  onPress={() => setStyleFilter(styleFilter === st ? null : st)}
-                >
-                  <Text style={[styles.chipText, styleFilter === st && styles.chipTextActive]}>
-                    {CLOTHING_STYLE_LABELS[st]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          {hasActiveFilters && (
-            <TouchableOpacity style={styles.clearBtn} onPress={clearFilters}>
-              <Text style={styles.clearBtnText}>Filtreleri Temizle</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {!isLoading && !isError && totalCount > 0 && (
-          <Text style={styles.countText}>
-            {searchQuery.trim() ? `${filteredItems.length} / ${totalCount}` : totalCount} kıyafet
-          </Text>
-        )}
-
-        {isLoading && (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color="#6366F1" />
-          </View>
-        )}
-
-        {isError && (
-          <View style={styles.center}>
-            <Text style={styles.errorText}>Hata oluştu.</Text>
-            <TouchableOpacity onPress={() => refetch()}>
-              <Text style={styles.retryText}>Tekrar dene</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!isLoading && !isError && totalCount === 0 && !hasActiveFilters && (
-          <View style={styles.center}>
-            <Text style={styles.emptyEmoji}>👗</Text>
-            <Text style={styles.emptyText}>Henüz kıyafet eklemediniz.</Text>
-            <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddClothing' as never)}>
-              <Text style={styles.addBtnText}>İlk Kıyafeti Ekle</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!isLoading && !isError && filteredItems.length === 0 && hasActiveFilters && (
-          <View style={styles.center}>
-            <Text style={styles.emptyEmoji}>🔍</Text>
-            <Text style={styles.emptyText}>Filtrelerle eşleşen kıyafet bulunamadı.</Text>
-            <TouchableOpacity style={styles.clearBtn} onPress={clearFilters}>
-              <Text style={styles.clearBtnText}>Filtreleri Temizle</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!isLoading && !isError && filteredItems.length > 0 && (
-          <FlatList
-            style={styles.list}
-            data={filteredItems}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <ClothingCard
-                item={item}
-                onMarkClean={markClean}
-                onMarkDirty={markDirty}
-                onDelete={deleteItem}
-                onPress={() => (navigation.navigate as (screen: string, params?: object) => void)('ClothingDetail', { id: item.id })}
-              />
-            )}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.3}
-            ListFooterComponent={renderFooter}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+        <TouchableOpacity
+          style={styles.addButton}
+          activeOpacity={0.85}
+          onPress={() => (navigation.navigate as (s: string) => void)('AddClothing')}
+        >
+          <Ionicons name="add" size={26} color="#4A403A" />
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+      {/* ── Arama + Filtre ── */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color="#9C8C84" />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Kıyafetlerini ara..."
+            placeholderTextColor="#9C8C84"
+          />
+        </View>
+        <TouchableOpacity style={styles.filterButton} activeOpacity={0.8}>
+          <Ionicons name="options-outline" size={20} color="#4A403A" />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Kategori chip'leri ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsContent}
+        style={styles.chipsScroll}
+      >
+        {CHIPS.map(chip => {
+          const isActive = categoryFilter === chip.key;
+          return (
+            <TouchableOpacity
+              key={String(chip.key)}
+              style={[styles.chip, isActive && styles.chipActive]}
+              activeOpacity={0.8}
+              onPress={() => setCategoryFilter(chip.key)}
+            >
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {chip.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ── Liste ── */}
+      {isLoading && (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#C9A86A" />
+        </View>
+      )}
+
+      {!isLoading && (
+        <FlatList
+          data={displayItems}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          onEndReached={isMock ? undefined : handleEndReached}
+          onEndReachedThreshold={0.3}
+          renderItem={({ item }) => (
+            <ClothingCardNew
+              item={item}
+              localImage={isMock ? MOCK_IMAGES[item.id] : undefined}
+              onPress={() =>
+                (navigation.navigate as (s: string, p: object) => void)(
+                  'ClothingDetail', { id: item.id }
+                )
+              }
+            />
+          )}
+          ListFooterComponent={
+            isFetchingNextPage
+              ? <ActivityIndicator size="small" color="#C9A86A" style={{ marginVertical: 16 }} />
+              : null
+          }
+        />
+      )}
+    </View>
   );
 }
 
+// ── Stiller ───────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
-  container: { flex: 1, paddingHorizontal: 16, paddingTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: '#FDFBF7',
+  },
+
+  // Header
   header: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#1E1B4B' },
-  addBtn: { backgroundColor: '#6366F1', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
-  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-  searchInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+  title: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 30,
+    lineHeight: 32,
+    color: '#4A403A',
+  },
+  subtitle: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
-    marginBottom: 12,
+    lineHeight: 20,
+    color: '#9C8C84',
+    marginTop: 2,
   },
-  filtersSection: { marginBottom: 8 },
-  filterLabel: { fontSize: 11, fontWeight: '600', color: '#6B7280', marginTop: 8, marginBottom: 5 },
-  chipRow: { flexDirection: 'row', gap: 7, paddingBottom: 4 },
-  chip: { backgroundColor: '#EDE9FE', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 20 },
-  chipActive: { backgroundColor: '#6366F1' },
-  chipText: { fontSize: 11, color: '#6366F1', fontWeight: '500' },
-  chipTextActive: { color: '#fff' },
-  clearBtn: {
-    alignSelf: 'flex-start', marginTop: 8,
-    paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 8, borderWidth: 1, borderColor: '#6366F1',
+  addButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 9999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.20,
+    shadowRadius: 2,
+    elevation: 3,
   },
-  clearBtnText: { color: '#6366F1', fontSize: 12, fontWeight: '600' },
-  countText: { fontSize: 11, color: '#9CA3AF', marginBottom: 10 },
-  list: { flex: 1 },
-  listContent: { paddingBottom: 24 },
-  footer: { paddingVertical: 14, alignItems: 'center' },
-  footerText: { fontSize: 11, color: '#9CA3AF' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, paddingTop: 40 },
-  emptyEmoji: { fontSize: 48 },
-  emptyText: { fontSize: 15, color: '#6B7280' },
-  errorText: { fontSize: 14, color: '#EF4444' },
-  retryText: { fontSize: 13, color: '#6366F1', textDecorationLine: 'underline' },
+
+  // Search row
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 16,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    paddingHorizontal: 16,
+    height: 52,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#4A403A',
+  },
+  filterButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
+  // Chips
+  chipsScroll: {
+    marginBottom: 20,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  chipsContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    gap: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chip: {
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    borderRadius: 9999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(201,168,106,0.20)',
+  },
+  chipActive: {
+    backgroundColor: '#C9A86A',
+    borderColor: '#C9A86A',
+  },
+  chipText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#9C8C84',
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+    fontFamily: 'Poppins_600SemiBold',
+  },
+
+  // Grid
+  columnWrapper: {
+    paddingHorizontal: 20,
+    gap: 14,
+    marginBottom: 14,
+  },
+  listContent: {
+    paddingBottom: 110,
+  },
+
+  // Card
+  card: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  cardImageWrap: {
+    width: '100%',
+    aspectRatio: 139 / 173.75,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(250,237,205,0.30)',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardImagePlaceholder: {
+    flex: 1,
+    backgroundColor: 'rgba(250,237,205,0.30)',
+  },
+  cardTitle: {
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#4A403A',
+    marginTop: 10,
+  },
+  cardSubtitle: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#9C8C84',
+    marginTop: 2,
+  },
+
+  // States
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  emptyText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 15,
+    color: '#9C8C84',
+  },
+  addFirstButton: {
+    backgroundColor: '#1F1F1F',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+  },
+  addFirstText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  errorText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#EF4444',
+  },
+  retryText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 13,
+    color: '#C9A86A',
+  },
 });

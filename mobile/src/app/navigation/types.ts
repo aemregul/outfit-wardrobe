@@ -27,6 +27,7 @@ export type RootStackParamList = {
   // Shared detail screens — RootStack'te, cross-tab navigate için
   ClothingDetail: { id: string };
   OutfitDetail: { id: string };
+  WeatherDetail: undefined;
   PostDetail: { id: string };
   UserProfile: { id: string };
 };

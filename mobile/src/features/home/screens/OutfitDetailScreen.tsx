@@ -41,27 +41,27 @@ export function OutfitDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* ── Header sabit ── */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.headerBtn}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.96)" />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>Kıyafet Detayı</Text>
+
+        <TouchableOpacity style={styles.headerBtn} activeOpacity={0.8}>
+          <Ionicons name="ellipsis-vertical" size={18} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 24) + 24 }]}
       >
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.headerBtn}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.96)" />
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Kıyafet Detayı</Text>
-
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.8}>
-            <Ionicons name="ellipsis-vertical" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
         {/* ── Main Image Card ── */}
         <View style={styles.imageCard}>
           <Image source={outfitImage} style={styles.outfitImage} resizeMode="cover" />
@@ -175,8 +175,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   headerBtn: {
     width: 40,
