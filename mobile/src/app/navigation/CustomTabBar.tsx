@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { tabBarTranslateY } from './TabBarVisibility';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,18 +39,11 @@ function TabIcon({ family, icon, size, color }: { family: IconFamily; icon: stri
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-
-  // Nested stack'te (örn. OutfitDetailScreen) tab bar gizlenir
-  const activeTabRoute = state.routes[state.index];
-  const nestedState = activeTabRoute?.state as any;
-  if (nestedState?.index != null && nestedState.index > 0) return null;
   const [barWidth, setBarWidth] = useState(0);
   const isFirstRender = useRef(true);
 
-  // Sliding pill position
   const pillX = useSharedValue(0);
 
-  // Per-tab icon scale (5 tabs, hooks must be declared at top level)
   const scale0 = useSharedValue(1);
   const scale1 = useSharedValue(1);
   const scale2 = useSharedValue(1);
@@ -67,6 +61,11 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     transform: [{ translateX: pillX.value }],
   }));
 
+  // Tab bar'ı ekran dışına taşıyan animasyon — component asla unmount olmaz
+  const hideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: tabBarTranslateY.value }],
+  }));
+
   const tabCount = state.routes.length;
   const tabWidth = barWidth > 0 ? barWidth / tabCount : 0;
 
@@ -76,16 +75,13 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const newX = state.index * tabWidth;
 
     if (isFirstRender.current) {
-      // Snap to initial position without animation
       pillX.value = newX;
       isFirstRender.current = false;
       return;
     }
 
-    // Slide pill with spring
     pillX.value = withSpring(newX, { damping: 22, stiffness: 280, mass: 0.7 });
 
-    // Bounce the active tab icon
     const scales = [scale0, scale1, scale2, scale3, scale4];
     const active = scales[state.index];
     if (active) {
@@ -99,7 +95,10 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const bottomOffset = Math.max(insets.bottom, 8) + 12;
 
   return (
-    <View style={[styles.wrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
+    <Animated.View
+      style={[styles.wrapper, { bottom: bottomOffset }, hideStyle]}
+      pointerEvents="box-none"
+    >
       <View style={styles.shadow} />
 
       <BlurView intensity={60} tint="dark" style={styles.blurContainer}>
@@ -109,7 +108,6 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           style={styles.tabsRow}
           onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
         >
-          {/* Single sliding pill — rendered below tabs */}
           {barWidth > 0 && (
             <Animated.View
               style={[
@@ -159,7 +157,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           })}
         </View>
       </BlurView>
-    </View>
+    </Animated.View>
   );
 }
 

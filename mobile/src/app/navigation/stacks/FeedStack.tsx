@@ -15,7 +15,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function FeedStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Feed" component={HomeScreen} />
       <Stack.Screen name="OutfitDetail" component={OutfitDetailScreen} />
       <Stack.Screen name="WeatherDetail" component={WeatherDetailScreen} />

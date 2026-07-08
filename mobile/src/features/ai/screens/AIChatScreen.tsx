@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { hideTabBar, showTabBar } from '../../../app/navigation/TabBarVisibility';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -128,6 +129,17 @@ export function AIChatScreen() {
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList>(null);
 
+  useFocusEffect(
+    useCallback(() => {
+      hideTabBar();
+      return () => showTabBar();
+    }, [])
+  );
+
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: false });
+  }, [navigation]);
+
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -166,7 +178,7 @@ export function AIChatScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => { showTabBar(); navigation.goBack(); }}>
           <Ionicons name="chevron-back" size={22} color="#4A403A" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>

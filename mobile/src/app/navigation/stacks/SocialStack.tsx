@@ -13,7 +13,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function SocialStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="OutfitList" component={FeedScreen} />
       <Stack.Screen name="Explore" component={ExploreScreen} />
       <Stack.Screen

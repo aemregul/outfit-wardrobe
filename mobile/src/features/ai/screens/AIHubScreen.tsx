@@ -36,6 +36,26 @@ const FEATURES = [
     gradient: ['#C9A86A', '#B8935A'] as [string, string],
     tagColor: '#FFFFFF',
   },
+  {
+    id: 'hiddengems',
+    route: 'HiddenGems' as const,
+    icon: 'diamond-outline' as const,
+    title: 'Gizli Hazineler',
+    description: 'Uzun süredir giyilmeyen parçaları keşfet, yeni kombinlerle hayat ver.',
+    tag: 'Keşfet',
+    gradient: ['#7B6352', '#5C4A3A'] as [string, string],
+    tagColor: '#F0EDE8',
+  },
+  {
+    id: 'missingpieces',
+    route: 'MissingPieces' as const,
+    icon: 'bag-handle-outline' as const,
+    title: 'Eksik Parçalar',
+    description: 'Dolabındaki boşlukları keşfet, en fazla kombin açan parçaları öğren.',
+    tag: 'Analiz',
+    gradient: ['#4A7B6F', '#355C53'] as [string, string],
+    tagColor: '#A8D5C9',
+  },
 ];
 
 const TIPS = [

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Image, StyleSheet,
   Animated, Easing, Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { hideTabBar, showTabBar } from '../../../app/navigation/TabBarVisibility';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -32,6 +33,18 @@ const STEP_LABELS = ['Fotoğraf', 'Kıyafet', 'İşlem', 'Sonuç'];
 export function VirtualTryOnScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+
+  useFocusEffect(
+    useCallback(() => {
+      hideTabBar();
+      return () => showTabBar();
+    }, [])
+  );
+
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: false });
+  }, [navigation]);
+
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -330,7 +343,7 @@ export function VirtualTryOnScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerBack}
-          onPress={() => (canGoBack ? setStep((step - 1) as Step) : navigation.goBack())}
+          onPress={() => (canGoBack ? setStep((step - 1) as Step) : (showTabBar(), navigation.goBack()))}
           activeOpacity={0.7}
         >
           <Ionicons name="chevron-back" size={22} color="#4A403A" />

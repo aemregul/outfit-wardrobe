@@ -33,6 +33,8 @@ export type RootStackParamList = {
   AIChat: undefined;
   AIHub: undefined;
   VirtualTryOn: undefined;
+  HiddenGems: undefined;
+  MissingPieces: undefined;
   EditProfile: undefined;
   PostDetail: { id: string };
   PostComments: { postId: string };
