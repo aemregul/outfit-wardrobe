@@ -21,10 +21,10 @@ const sneakersImage = require('../../../../assets/images/main/White sneakers.png
 const necklaceImage = require('../../../../assets/images/main/Gold necklace.png');
 
 const OUTFIT_ITEMS = [
-  { id: '1', label: 'Top',      image: shirtImage,    active: true  },
-  { id: '2', label: 'Bottom',   image: null,           active: false },
-  { id: '3', label: 'Shoes',    image: sneakersImage,  active: false },
-  { id: '4', label: 'Accessory',image: necklaceImage,  active: false },
+  { id: '1', label: 'Üst',      image: shirtImage,    active: true  },
+  { id: '2', label: 'Alt',      image: null,           active: false },
+  { id: '3', label: 'Ayakkabı', image: sneakersImage,  active: false },
+  { id: '4', label: 'Aksesuar', image: necklaceImage,  active: false },
 ];
 
 export function OutfitDetailScreen() {
@@ -125,7 +125,7 @@ export function OutfitDetailScreen() {
           <View style={styles.colorCardTop}>
             <Text style={styles.colorCardTitle}>Renk Uyumu</Text>
             <View style={styles.matchBadge}>
-              <Text style={styles.matchText}>94% Match</Text>
+              <Text style={styles.matchText}>94% Uyum</Text>
             </View>
           </View>
 

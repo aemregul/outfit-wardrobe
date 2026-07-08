@@ -7,6 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { QUERY_KEYS } from '../../../shared/constants/queryKeys';
 import { OutfitCard } from '../components/OutfitCard';
 import { useInfiniteOutfits, useToggleFavorite } from '../hooks/useOutfits';
@@ -23,6 +30,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function OutfitListScreen() {
   const navigation = useNavigation<Nav>();
   const queryClient = useQueryClient();
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   useFocusEffect(
     useCallback(() => {
@@ -94,6 +102,18 @@ export function OutfitListScreen() {
     setOccasionFilter(null);
   }
 
+  const renderFooter = useCallback(() => (
+    <View style={styles.footer}>
+      {isFetchingNextPage
+        ? <ActivityIndicator size="small" color="#C9A86A" />
+        : !hasNextPage && filteredItems.length > 0
+          ? <Text style={styles.footerText}>Tüm sonuçlar yüklendi</Text>
+          : null}
+    </View>
+  ), [isFetchingNextPage, hasNextPage, filteredItems.length]);
+
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   const ListHeader = (
     <View>
       <View style={styles.header}>
@@ -111,7 +131,7 @@ export function OutfitListScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Kombin adı veya açıklama ara..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#C4B8AF"
       />
 
       <View style={styles.filtersSection}>
@@ -236,7 +256,7 @@ export function OutfitListScreen() {
 
       {isLoading && (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       )}
 
@@ -274,16 +294,6 @@ export function OutfitListScreen() {
     </View>
   );
 
-  const renderFooter = useCallback(() => (
-    <View style={styles.footer}>
-      {isFetchingNextPage
-        ? <ActivityIndicator size="small" color="#6366F1" />
-        : !hasNextPage && filteredItems.length > 0
-          ? <Text style={styles.footerText}>Tüm sonuçlar yüklendi</Text>
-          : null}
-    </View>
-  ), [isFetchingNextPage, hasNextPage, filteredItems.length]);
-
   return (
     <SafeAreaView style={styles.safe}>
       <FlatList
@@ -311,7 +321,7 @@ export function OutfitListScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   list: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 32 },
   header: {
@@ -320,48 +330,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#1E1B4B' },
+  title: { fontFamily: 'Poppins_700Bold', fontSize: 22, color: '#4A403A' },
   generateBtn: {
-    backgroundColor: '#6366F1',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#1F1F1F',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 12,
   },
-  generateBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  generateBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#fff', fontSize: 13 },
   searchInput: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
+    borderColor: 'rgba(74,64,58,0.12)',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
+    color: '#4A403A',
     marginBottom: 16,
   },
   filtersSection: { marginBottom: 12 },
-  filterLabel: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginTop: 10, marginBottom: 6 },
+  filterLabel: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    color: '#9C8C84',
+    marginTop: 10,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
   chipRow: { flexDirection: 'row', gap: 8, paddingBottom: 4 },
-  chip: { backgroundColor: '#EDE9FE', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  chipActive: { backgroundColor: '#6366F1' },
-  chipText: { fontSize: 12, color: '#6366F1', fontWeight: '500' },
+  chip: { backgroundColor: '#F0EDE8', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  chipActive: { backgroundColor: '#C9A86A' },
+  chipText: { fontFamily: 'Poppins_500Medium', fontSize: 12, color: '#9C8C84' },
   chipTextActive: { color: '#fff' },
   clearBtn: {
     alignSelf: 'flex-start',
     marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#6366F1',
+    borderColor: '#C9A86A',
   },
-  clearBtnText: { color: '#6366F1', fontSize: 13, fontWeight: '600' },
-  countText: { fontSize: 12, color: '#9CA3AF', marginBottom: 12 },
+  clearBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#C9A86A', fontSize: 13 },
+  countText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84', marginBottom: 12 },
   footer: { paddingVertical: 16, alignItems: 'center' },
-  footerText: { fontSize: 12, color: '#9CA3AF' },
+  footerText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84' },
   center: { justifyContent: 'center', alignItems: 'center', gap: 12, paddingTop: 40 },
   emptyEmoji: { fontSize: 48 },
-  emptyText: { fontSize: 16, color: '#6B7280' },
-  errorText: { fontSize: 15, color: '#EF4444' },
-  retryText: { fontSize: 14, color: '#6366F1', textDecorationLine: 'underline' },
+  emptyText: { fontFamily: 'Poppins_500Medium', fontSize: 16, color: '#9C8C84' },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  retryText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A', textDecorationLine: 'underline' },
 });

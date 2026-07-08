@@ -1,88 +1,152 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, StyleSheet,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
-import { useMe } from '../../auth/hooks/useMe';
 import { useKeycloak } from '../../../app/providers/AuthProvider';
-import type { RootStackParamList } from '../../../app/navigation/types';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
-const KEYCLOAK_URL = process.env.EXPO_PUBLIC_KEYCLOAK_URL ?? 'http://localhost:8081';
-const KEYCLOAK_REALM = process.env.EXPO_PUBLIC_KEYCLOAK_REALM ?? 'outfit-combine';
-const KEYCLOAK_CLIENT_ID = process.env.EXPO_PUBLIC_KEYCLOAK_CLIENT_ID_NATIVE ?? 'outfit-combine-mobile';
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '1.0.0';
 
 export function SettingsScreen() {
-  const navigation = useNavigation<Nav>();
-  const { data: profile } = useMe();
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { logout } = useKeycloak();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  async function handleLogout() {
-    setShowLogoutModal(false);
-    await logout();
-  }
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [morningReminder, setMorningReminder]           = useState(true);
+  const [discoverOutfits, setDiscoverOutfits]           = useState(true);
+  const [aiStylistTips, setAiStylistTips]               = useState(true);
+  const [showLogoutModal, setShowLogoutModal]           = useState(false);
+  const [showDeleteModal, setShowDeleteModal]           = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold,
+  });
+
+  if (!fontsLoaded) return <View style={styles.container} />;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtn}>← Geri</Text>
-          </TouchableOpacity>
-          <Text style={styles.pageTitle}>Ayarlar</Text>
-          <View style={styles.headerSpacer} />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <View style={{ width: 38 }} />
+        <Text style={styles.headerTitle}>Ayarlar</Text>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={18} color="#4A403A" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 20) + 24 },
+        ]}
+      >
+        {/* ── GENEL ── */}
+        <SectionHeader title="Genel" />
+        <View style={styles.card}>
+          <NavRow label="Dil" isFirst />
+          <View style={styles.themeRow}>
+            <Text style={styles.rowLabel}>Tema</Text>
+            <Text style={styles.themeNote}>
+              Şu an yalnızca açık tema kullanılmaktadır. Karanlık tema ilerideki güncellemede gelecek.
+            </Text>
+          </View>
+          <ToggleRow
+            label="Bildirimler"
+            value={notificationsEnabled}
+            onChange={setNotificationsEnabled}
+            isLast
+          />
         </View>
 
-        <SectionCard title="Hesap Bilgileri">
-          <SettingRow label="Kullanıcı Adı" value={profile?.username ?? '—'} />
-          <SettingRow label="E-posta" value={profile?.email ?? '—'} />
-          <SettingRow label="Görünen İsim" value={profile?.displayName ?? '—'} />
-          <SettingRow
-            label="Üyelik Tarihi"
-            value={
-              profile?.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString('tr-TR')
-                : '—'
-            }
+        {/* ── GÜNLÜK BİLDİRİMLER ── */}
+        <SectionHeader title="Günlük Bildirimler" />
+        <View style={styles.card}>
+          <NotifRow
+            label="Sabah Kombinini Hatırlat"
+            time="09:00"
+            description="Her sabah bugünkü kombinini planlamanı hatırlatır"
+            value={morningReminder}
+            onChange={setMorningReminder}
+            isFirst
           />
-        </SectionCard>
-
-        <SectionCard title="Gizlilik">
-          <SettingRow
-            label="Hesap Görünürlüğü"
-            value={profile?.isPrivate ? 'Gizli' : 'Herkese Açık'}
+          <NotifRow
+            label="Yeni Kombinleri Keşfet"
+            time="13:00"
+            description="Öğlen insanların paylaştığı yeni kombinleri bildirir"
+            value={discoverOutfits}
+            onChange={setDiscoverOutfits}
           />
-          <InfoText>
-            Gizli hesaplarda kombinleriniz ve paylaşımlarınız yalnızca siz tarafından görülebilir.
-            Profil ekranından değiştirebilirsiniz.
-          </InfoText>
-        </SectionCard>
+          <NotifRow
+            label="AI Stilist Önerileri"
+            time="20:00"
+            description="Akşam AI stilistinden kişiselleştirilmiş öneriler alırsın"
+            value={aiStylistTips}
+            onChange={setAiStylistTips}
+            isLast
+          />
+          <View style={styles.notifFooter}>
+            <Ionicons name="globe-outline" size={13} color="#9C8C84" />
+            <Text style={styles.notifFooterText}>Bildirimler seçtiğin dilde gelir</Text>
+          </View>
+        </View>
 
-        <SectionCard title="Uygulama Bilgileri">
-          <SettingRow label="Uygulama Adı" value="Outfit Combine" />
-          <SettingRow label="Versiyon" value={APP_VERSION} />
-          <SettingRow label="Platform" value="Mobile" />
-        </SectionCard>
+        {/* ── VERİLERİ SENKRONIZE ET ── */}
+        <SectionHeader title="Verileri Senkronize Et" />
+        <View style={styles.card}>
+          <NavRow label="Verileri Yönet" isFirst isLast />
+        </View>
 
-        <SectionCard title="Bağlantı Yapılandırması">
-          <SettingRow label="API URL" value={API_BASE_URL} mono />
-          <SettingRow label="Keycloak URL" value={KEYCLOAK_URL} mono />
-          <SettingRow label="Realm" value={KEYCLOAK_REALM} mono />
-          <SettingRow label="Client ID" value={KEYCLOAK_CLIENT_ID} mono />
-        </SectionCard>
+        {/* ── GİZLİLİK & GÜVENLİK ── */}
+        <SectionHeader title="Gizlilik & Güvenlik" />
+        <View style={styles.card}>
+          <NavRow label="AI Veri Paylaşımı" isFirst />
+          <NavRow label="Gizlilik Politikası" />
+          <NavRow label="Kullanım Şartları" />
+          <NavRow label="Yaş Derecelendirmesi & İçerik Uygunluğu" isLast />
+        </View>
 
-        <SectionCard title="Oturum">
-          <TouchableOpacity style={styles.logoutBtn} onPress={() => setShowLogoutModal(true)}>
-            <Text style={styles.logoutBtnText}>Çıkış Yap</Text>
-          </TouchableOpacity>
-        </SectionCard>
+        {/* ── HESAP ── */}
+        <SectionHeader title="Hesap" />
+        <View style={styles.card}>
+          <NavRow label="Gizlilik & Veri" isFirst />
+          <DangerRow
+            label="Hesabı Sil"
+            onPress={() => setShowDeleteModal(true)}
+            isLast
+          />
+        </View>
+
+        {/* ── DESTEK ── */}
+        <SectionHeader title="Destek" />
+        <View style={styles.card}>
+          <NavRow label="Yardım" isFirst />
+          <NavRow label="SSS" />
+          <NavRow label="Bize Ulaşın" />
+          <NavRow label="Uygulamayı Değerlendir" />
+          <NavRow
+            label="Çıkış"
+            onPress={() => setShowLogoutModal(true)}
+            isLast
+          />
+        </View>
+
+        <Text style={styles.version}>YourStyle v{APP_VERSION}</Text>
       </ScrollView>
 
       <ConfirmModal
@@ -90,101 +154,271 @@ export function SettingsScreen() {
         title="Çıkış Yap"
         message="Hesabınızdan çıkış yapmak istediğinize emin misiniz?"
         confirmLabel="Çıkış Yap"
-        onConfirm={handleLogout}
+        onConfirm={async () => { setShowLogoutModal(false); await logout(); }}
         onCancel={() => setShowLogoutModal(false)}
       />
-    </SafeAreaView>
-  );
-}
-
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      {children}
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Hesabı Sil"
+        message="Hesabınız kalıcı olarak silinecek ve tüm verileriniz kaybolacak. Bu işlem geri alınamaz."
+        confirmLabel="Evet, Sil"
+        onConfirm={() => setShowDeleteModal(false)}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </View>
   );
 }
 
-function SettingRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+// ─── Sub-components ───────────────────────────────────────────────
+
+function SectionHeader({ title }: { title: string }) {
   return (
-    <View style={styles.row}>
+    <Text style={styles.sectionHeader}>{title.toUpperCase()}</Text>
+  );
+}
+
+function NavRow({
+  label, onPress, isFirst, isLast,
+}: {
+  label: string;
+  onPress?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.row, isFirst && styles.rowFirst, isLast && styles.rowLast]}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, mono && styles.rowValueMono]} numberOfLines={1}>
-        {value}
-      </Text>
+      <Ionicons name="chevron-forward" size={16} color="#C4B8AF" />
+    </TouchableOpacity>
+  );
+}
+
+function ToggleRow({
+  label, value, onChange, isFirst, isLast,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <View style={[styles.row, isFirst && styles.rowFirst, isLast && styles.rowLast]}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: '#C9A86A', false: '#E8E0D8' }}
+        thumbColor="#FFFFFF"
+      />
     </View>
   );
 }
 
-function InfoText({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.infoText}>{children}</Text>;
+function NotifRow({
+  label, time, description, value, onChange, isFirst, isLast,
+}: {
+  label: string;
+  time: string;
+  description: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <View style={[styles.notifRow, isFirst && styles.rowFirst, isLast && styles.notifRowLast]}>
+      <View style={styles.notifLeft}>
+        <View style={styles.notifTitleRow}>
+          <Text style={styles.rowLabel}>{label}</Text>
+          <View style={styles.timeBadge}>
+            <Text style={styles.timeBadgeText}>{time}</Text>
+          </View>
+        </View>
+        <Text style={styles.notifDesc}>{description}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: '#C9A86A', false: '#E8E0D8' }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  );
 }
+
+function DangerRow({
+  label, onPress, isFirst, isLast,
+}: {
+  label: string;
+  onPress: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.row, isFirst && styles.rowFirst, isLast && styles.rowLast]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Text style={[styles.rowLabel, styles.dangerLabel]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color="#FCA5A5" />
+    </TouchableOpacity>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
-  scroll: { flex: 1 },
-  container: { padding: 16, paddingBottom: 48, gap: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#FDFBF7',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
-  pageTitle: { fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
-  headerSpacer: { width: 40 },
-  card: {
-    backgroundColor: '#fff',
+  headerTitle: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 17,
+    color: '#4A403A',
+  },
+  closeBtn: {
+    width: 38,
+    height: 38,
     borderRadius: 12,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
     elevation: 2,
-    gap: 2,
   },
-  cardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#6366F1',
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  sectionHeader: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 11,
+    letterSpacing: 0.9,
+    color: '#9C8C84',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    marginTop: 28,
     marginBottom: 10,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 4,
   },
   row: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
-  rowLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500', flex: 1 },
-  rowValue: {
-    fontSize: 13,
-    color: '#1E1B4B',
-    fontWeight: '500',
-    flex: 2,
-    textAlign: 'right',
+  rowFirst: {},
+  rowLast: {
+    borderBottomWidth: 0,
   },
-  rowValueMono: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    color: '#4B5563',
+  rowLabel: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 15,
+    color: '#4A403A',
+    flex: 1,
   },
-  infoText: {
+  themeRow: {
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+    gap: 5,
+  },
+  themeNote: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
-    color: '#9CA3AF',
     lineHeight: 18,
-    marginTop: 8,
+    color: '#9C8C84',
   },
-  logoutBtn: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 12,
-    borderRadius: 8,
+  notifRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+    gap: 12,
   },
-  logoutBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  notifRowLast: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  notifLeft: {
+    flex: 1,
+    gap: 5,
+  },
+  notifTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  timeBadge: {
+    backgroundColor: '#1F1F1F',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  timeBadgeText: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    color: '#C9A86A',
+  },
+  notifDesc: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#9C8C84',
+  },
+  notifFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+  },
+  notifFooterText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    color: '#9C8C84',
+  },
+  dangerLabel: {
+    color: '#EF4444',
+  },
+  version: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    color: '#B8AFA8',
+    textAlign: 'center',
+    marginTop: 32,
+  },
 });

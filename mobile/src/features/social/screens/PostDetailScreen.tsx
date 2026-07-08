@@ -7,6 +7,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import {
   usePost, useLikePost, useUnlikePost,
@@ -27,6 +35,7 @@ export function PostDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const postId = params.id;
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   const { data: post, isLoading, isError } = usePost(postId);
   const { data: commentsData, isLoading: commentsLoading } = useComments(postId, { size: 50 });
@@ -82,11 +91,13 @@ export function PostDetailScreen() {
     setConfirmCommentId(null);
   }
 
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       </SafeAreaView>
     );
@@ -98,7 +109,7 @@ export function PostDetailScreen() {
         <View style={styles.center}>
           <Text style={styles.errorText}>Gönderi bulunamadı.</Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.linkText}>← Geri dön</Text>
+            <Text style={styles.linkText}>Geri dön</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -120,8 +131,8 @@ export function PostDetailScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.backBtn}>← Geri</Text>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={20} color="#4A403A" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deletePostBtn}
@@ -199,7 +210,7 @@ export function PostDetailScreen() {
           <Text style={styles.sectionTitle}>Yorumlar</Text>
 
           {commentsLoading && (
-            <ActivityIndicator color="#6366F1" style={{ marginVertical: 12 }} />
+            <ActivityIndicator color="#C9A86A" style={{ marginVertical: 12 }} />
           )}
 
           {!commentsLoading && comments.length === 0 && (
@@ -248,7 +259,7 @@ export function PostDetailScreen() {
             value={commentText}
             onChangeText={(t) => { setCommentText(t); setCommentError(''); }}
             placeholder="Yorum yaz..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#C4B8AF"
             returnKeyType="send"
             onSubmitEditing={handleAddComment}
           />
@@ -285,7 +296,7 @@ export function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   root: { flex: 1 },
   scroll: { flex: 1 },
   container: { padding: 16 },
@@ -296,64 +307,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   deletePostBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#FCA5A5',
   },
-  deletePostBtnText: { color: '#EF4444', fontWeight: '600', fontSize: 13 },
+  deletePostBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#EF4444', fontSize: 13 },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#C9A86A',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  userId: { fontSize: 14, fontWeight: '600', color: '#1E1B4B' },
-  meta: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
-  image: { width: '100%', height: 300, borderRadius: 12, marginBottom: 16 },
+  avatarText: { fontFamily: 'Poppins_700Bold', color: '#fff', fontSize: 15 },
+  userId: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#4A403A' },
+  meta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: '#9C8C84', marginTop: 2 },
+  image: { width: '100%', height: 300, borderRadius: 16, marginBottom: 16 },
   imageFallback: {
     width: '100%',
     height: 160,
-    borderRadius: 12,
-    backgroundColor: '#EDE9FE',
+    borderRadius: 16,
+    backgroundColor: '#F0EDE8',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   imageFallbackText: { fontSize: 48 },
-  caption: { fontSize: 15, color: '#374151', lineHeight: 22, marginBottom: 14 },
+  caption: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: '#4A403A', lineHeight: 24, marginBottom: 14 },
   outfitBtn: {
-    backgroundColor: '#EDE9FE',
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: '#F0EDE8',
+    paddingVertical: 11,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
   },
-  outfitBtnText: { color: '#6366F1', fontWeight: '600', fontSize: 14 },
+  outfitBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#4A403A', fontSize: 14 },
   reactRow: {
     flexDirection: 'row',
     gap: 24,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: 'rgba(74,64,58,0.08)',
     paddingVertical: 12,
     marginBottom: 20,
   },
   reactBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  likeIcon: { fontSize: 22, color: '#9CA3AF' },
+  likeIcon: { fontSize: 22, color: '#C4B8AF' },
   likeIconActive: { color: '#EF4444' },
   commentIconLg: { fontSize: 20 },
-  reactCount: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+  reactCount: { fontFamily: 'Poppins_500Medium', fontSize: 13, color: '#9C8C84' },
   reactCountActive: { color: '#EF4444' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1E1B4B', marginBottom: 12 },
-  noComments: { fontSize: 13, color: '#9CA3AF', marginBottom: 12, fontStyle: 'italic' },
+  sectionTitle: { fontFamily: 'Poppins_700Bold', fontSize: 16, color: '#4A403A', marginBottom: 12 },
+  noComments: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#9C8C84', marginBottom: 12, fontStyle: 'italic' },
   commentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -364,16 +387,16 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#F0EDE8',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  commentAvatarText: { fontSize: 12, fontWeight: '700', color: '#6366F1' },
+  commentAvatarText: { fontFamily: 'Poppins_700Bold', fontSize: 12, color: '#4A403A' },
   commentContent: { flex: 1 },
-  commentUser: { fontSize: 12, fontWeight: '700', color: '#6366F1', marginBottom: 2 },
-  commentText: { fontSize: 14, color: '#374151', lineHeight: 19 },
-  commentDate: { fontSize: 10, color: '#9CA3AF', marginTop: 3 },
-  deleteCommentBtn: { fontSize: 12, color: '#9CA3AF', paddingTop: 2 },
+  commentUser: { fontFamily: 'Poppins_700Bold', fontSize: 12, color: '#4A403A', marginBottom: 2 },
+  commentText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#4A403A', lineHeight: 20 },
+  commentDate: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: '#C4B8AF', marginTop: 3 },
+  deleteCommentBtn: { fontSize: 12, color: '#C4B8AF', paddingTop: 2 },
   commentInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -381,35 +404,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'rgba(74,64,58,0.10)',
     backgroundColor: '#fff',
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FDFBF7',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(74,64,58,0.12)',
     borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 9,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
+    color: '#4A403A',
   },
   sendBtn: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#1F1F1F',
     paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: 20,
   },
-  sendBtnDisabled: { backgroundColor: '#C7D2FE' },
-  sendBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  sendBtnDisabled: { backgroundColor: '#D4BC8C' },
+  sendBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#fff', fontSize: 13 },
   commentErrorText: {
+    fontFamily: 'Poppins_400Regular',
     color: '#EF4444',
     fontSize: 12,
     paddingHorizontal: 16,
     paddingBottom: 6,
     backgroundColor: '#fff',
   },
-  errorText: { fontSize: 15, color: '#EF4444' },
-  linkText: { color: '#6366F1', fontSize: 14 },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  linkText: { fontFamily: 'Poppins_500Medium', color: '#C9A86A', fontSize: 14 },
 });

@@ -6,6 +6,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { useWearLog, useDeleteWearLog } from '../hooks/useWearLogs';
 import { useOutfit } from '../../outfits/hooks/useOutfits';
@@ -44,6 +52,7 @@ export function WearLogDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const logId = params.id;
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   const { data: log, isLoading, isError } = useWearLog(logId);
   const { data: outfit } = useOutfit(log?.outfitId ?? '');
@@ -56,11 +65,13 @@ export function WearLogDetailScreen() {
     });
   }
 
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       </SafeAreaView>
     );
@@ -72,7 +83,7 @@ export function WearLogDetailScreen() {
         <View style={styles.center}>
           <Text style={styles.errorText}>Kayıt bulunamadı.</Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.linkText}>← Geri dön</Text>
+            <Text style={styles.linkText}>Geri dön</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -83,8 +94,8 @@ export function WearLogDetailScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtn}>← Geri</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={20} color="#4A403A" />
           </TouchableOpacity>
           <Text style={styles.title}>Giyilme Detayı</Text>
         </View>
@@ -160,90 +171,107 @@ export function WearLogDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   scroll: { flex: 1 },
-  container: { padding: 16, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
-  title: { fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 24 },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  title: { fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#4A403A' },
 
   heroCard: {
-    backgroundColor: '#6366F1',
-    borderRadius: 14,
+    backgroundColor: '#1F1F1F',
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     marginBottom: 20,
   },
   heroOutfitName: {
+    fontFamily: 'Poppins_700Bold',
     fontSize: 18,
-    fontWeight: '700',
     color: '#fff',
     textAlign: 'center',
     marginBottom: 8,
   },
-  heroLabel: { fontSize: 12, color: '#C7D2FE', fontWeight: '600', marginBottom: 6 },
-  heroDate: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center' },
+  heroLabel: { fontFamily: 'Poppins_500Medium', fontSize: 12, color: '#C9A86A', marginBottom: 6 },
+  heroDate: { fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#fff', textAlign: 'center' },
 
   photo: {
     width: '100%',
     height: 220,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 20,
   },
 
   detailCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(74,64,58,0.07)',
   },
-  detailLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  detailValue: { fontSize: 14, color: '#1E1B4B', fontWeight: '500', maxWidth: '60%', textAlign: 'right' },
+  detailLabel: { fontFamily: 'Poppins_500Medium', fontSize: 13, color: '#9C8C84' },
+  detailValue: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#4A403A', maxWidth: '60%', textAlign: 'right' },
 
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  star: { fontSize: 16, color: '#D1D5DB' },
-  starFilled: { color: '#FBBF24' },
-  ratingNum: { fontSize: 13, color: '#6B7280', marginLeft: 4 },
+  star: { fontSize: 16, color: '#E8DCC8' },
+  starFilled: { color: '#C9A86A' },
+  ratingNum: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#9C8C84', marginLeft: 4 },
 
   wearAgainBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 },
   wearAgainYes: { backgroundColor: '#D1FAE5' },
   wearAgainNo: { backgroundColor: '#FEE2E2' },
-  wearAgainText: { fontSize: 13, fontWeight: '600' },
+  wearAgainText: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
   wearAgainYesText: { color: '#065F46' },
   wearAgainNoText: { color: '#991B1B' },
 
   noteSection: { paddingTop: 10 },
-  noteText: { fontSize: 14, color: '#374151', lineHeight: 20, fontStyle: 'italic', marginTop: 6 },
+  noteText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#4A403A', lineHeight: 22, fontStyle: 'italic', marginTop: 6 },
 
   outfitBtn: {
-    backgroundColor: '#EDE9FE',
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor: '#1F1F1F',
+    paddingVertical: 15,
+    borderRadius: 14,
     alignItems: 'center',
     marginBottom: 12,
   },
-  outfitBtnText: { color: '#6366F1', fontSize: 15, fontWeight: '700' },
+  outfitBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#fff', fontSize: 15 },
 
   deleteBtn: {
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 13,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#FCA5A5',
     alignItems: 'center',
     marginBottom: 24,
   },
-  deleteBtnText: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
+  deleteBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#EF4444', fontSize: 14 },
 
-  errorText: { fontSize: 15, color: '#EF4444' },
-  linkText: { color: '#6366F1', fontSize: 14 },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  linkText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A' },
 });

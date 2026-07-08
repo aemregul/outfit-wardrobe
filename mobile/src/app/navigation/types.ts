@@ -28,7 +28,17 @@ export type RootStackParamList = {
   ClothingDetail: { id: string };
   OutfitDetail: { id: string };
   WeatherDetail: undefined;
+  Planner: undefined;
+  WeeklyPlanner: undefined;
+  AIChat: undefined;
+  AIHub: undefined;
+  VirtualTryOn: undefined;
+  EditProfile: undefined;
   PostDetail: { id: string };
+  PostComments: { postId: string };
+  OutfitPreview: { outfitId: string; imageUrl: string; caption?: string; username?: string };
+  WardrobeMatch: { outfitId: string; imageUrl: string };
+  OutfitReady: { imageUrl: string };
   UserProfile: { id: string };
 };
 

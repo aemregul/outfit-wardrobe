@@ -2,9 +2,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { RootStackParamList } from './types';
 import { WardrobeStack } from './stacks/WardrobeStack';
-import { OutfitStack } from './stacks/OutfitStack';
+import { SocialStack } from './stacks/SocialStack';
 import { FeedStack } from './stacks/FeedStack';
-import { WearLogStack } from './stacks/WearLogStack';
+import { AIStack } from './stacks/AIStack';
 import { ProfileStack } from './stacks/ProfileStack';
 import { CustomTabBar } from './CustomTabBar';
 
@@ -21,10 +21,10 @@ export function MainTabs() {
         headerShown: false,
       }}
     >
-      <Tab.Screen name="OutfitList"   component={OutfitStack} />
+      <Tab.Screen name="OutfitList"   component={SocialStack} />
       <Tab.Screen name="WardrobeList" component={WardrobeStack} />
       <Tab.Screen name="Feed"         component={FeedStack} />
-      <Tab.Screen name="WearLogList"  component={WearLogStack} />
+      <Tab.Screen name="WearLogList"  component={AIStack} />
       <Tab.Screen name="Profile"      component={ProfileStack} />
     </Tab.Navigator>
   );

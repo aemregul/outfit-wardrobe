@@ -6,6 +6,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import {
   useOutfit, useToggleFavorite, useDeleteOutfit, useMarkWorn,
@@ -22,6 +30,7 @@ export function OutfitDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const outfitId = params.id;
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   const { data: outfit, isLoading, isError } = useOutfit(outfitId);
   const { mutate: toggleFavorite, isPending: favPending } = useToggleFavorite();
@@ -71,11 +80,13 @@ export function OutfitDetailScreen() {
     });
   }
 
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       </SafeAreaView>
     );
@@ -87,7 +98,7 @@ export function OutfitDetailScreen() {
         <View style={styles.center}>
           <Text style={styles.errorText}>Kombin bulunamadı.</Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.linkText}>← Geri dön</Text>
+            <Text style={styles.linkText}>Geri dön</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -102,8 +113,8 @@ export function OutfitDetailScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtn}>← Geri</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={20} color="#4A403A" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => toggleFavorite({ id: outfitId, isFavorite: outfit.isFavorite })}
@@ -120,7 +131,7 @@ export function OutfitDetailScreen() {
           <Text style={styles.title}>{outfit.name}</Text>
           {outfit.aiGenerated && (
             <View style={styles.aiBadge}>
-              <Text style={styles.aiBadgeText}>AI Üretildi</Text>
+              <Text style={styles.aiBadgeText}>AI</Text>
             </View>
           )}
         </View>
@@ -221,7 +232,7 @@ export function OutfitDetailScreen() {
                   value={occasion}
                   onChangeText={setOccasion}
                   placeholder="Örn: İş toplantısı, akşam yemeği..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#C4B8AF"
                 />
 
                 <Text style={styles.fieldLabel}>Not (opsiyonel)</Text>
@@ -230,7 +241,7 @@ export function OutfitDetailScreen() {
                   value={note}
                   onChangeText={setNote}
                   placeholder="Nasıl hissettiniz?"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#C4B8AF"
                   multiline
                   numberOfLines={2}
                 />
@@ -281,9 +292,9 @@ export function OutfitDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   scroll: { flex: 1 },
-  container: { padding: 16, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   header: {
     flexDirection: 'row',
@@ -291,49 +302,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   favBtn: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#F0EDE8',
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 20,
   },
-  favBtnText: { color: '#6366F1', fontWeight: '600', fontSize: 13 },
+  favBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#C9A86A', fontSize: 13 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  title: { flex: 1, fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
+  title: { flex: 1, fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#4A403A' },
   aiBadge: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#1F1F1F',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  aiBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  description: { fontSize: 14, color: '#6B7280', marginBottom: 16, lineHeight: 20 },
+  aiBadgeText: { fontFamily: 'Poppins_700Bold', color: '#C9A86A', fontSize: 11 },
+  description: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#9C8C84', marginBottom: 16, lineHeight: 22 },
   aiCard: {
-    backgroundColor: '#EDE9FE',
-    borderRadius: 10,
+    backgroundColor: '#F0EDE8',
+    borderRadius: 14,
     padding: 16,
     marginBottom: 16,
   },
-  aiCardLabel: { fontSize: 11, fontWeight: '700', color: '#6366F1', marginBottom: 4 },
-  aiCardText: { fontSize: 14, color: '#1E1B4B', lineHeight: 20, marginBottom: 6 },
-  aiScore: { fontSize: 13, color: '#6366F1', fontWeight: '600' },
+  aiCardLabel: { fontFamily: 'Poppins_700Bold', fontSize: 11, color: '#C9A86A', marginBottom: 4, letterSpacing: 0.5 },
+  aiCardText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#4A403A', lineHeight: 22, marginBottom: 6 },
+  aiScore: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#C9A86A' },
   metaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 20 },
   chip: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#F0EDE8',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   chipOccasion: { backgroundColor: '#FEF3C7' },
-  chipStyle: { backgroundColor: '#F3F4F6' },
-  chipText: { fontSize: 12, color: '#6366F1', fontWeight: '500' },
+  chipStyle: { backgroundColor: 'rgba(74,64,58,0.06)' },
+  chipText: { fontFamily: 'Poppins_500Medium', fontSize: 12, color: '#9C8C84' },
   chipOccasionText: { color: '#92400E' },
-  chipStyleText: { color: '#4B5563' },
+  chipStyleText: { color: '#4A403A' },
   sectionTitle: {
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1E1B4B',
+    color: '#4A403A',
     marginBottom: 12,
     marginTop: 4,
   },
@@ -341,23 +364,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 12,
     marginBottom: 8,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   itemIcon: {
     width: 40,
     height: 40,
-    backgroundColor: '#EDE9FE',
-    borderRadius: 8,
+    backgroundColor: '#F0EDE8',
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   itemIconText: { fontSize: 18 },
   itemInfo: { flex: 1 },
-  itemName: { fontSize: 14, fontWeight: '600', color: '#1E1B4B' },
-  itemMeta: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  itemName: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#4A403A' },
+  itemMeta: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84', marginTop: 2 },
   cleanDot: {
     width: 8,
     height: 8,
@@ -368,49 +396,55 @@ const styles = StyleSheet.create({
   dirtyDot: { backgroundColor: '#EF4444' },
   successBanner: {
     backgroundColor: '#D1FAE5',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 14,
     marginTop: 20,
     alignItems: 'center',
   },
-  successText: { color: '#065F46', fontWeight: '600', fontSize: 14 },
+  successText: { fontFamily: 'Poppins_600SemiBold', color: '#065F46', fontSize: 14 },
   wornBtn: {
-    backgroundColor: '#6366F1',
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor: '#1F1F1F',
+    paddingVertical: 15,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 20,
   },
-  wornBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  wornBtnText: { fontFamily: 'Poppins_700Bold', color: '#fff', fontSize: 15 },
   wornForm: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     marginTop: 20,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  wornFormTitle: { fontSize: 16, fontWeight: '700', color: '#1E1B4B', marginBottom: 16 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  wornFormTitle: { fontFamily: 'Poppins_700Bold', fontSize: 16, color: '#4A403A', marginBottom: 16 },
+  fieldLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#4A403A', marginBottom: 8 },
   ratingRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   ratingStar: {
     width: 40,
     height: 40,
-    borderRadius: 8,
-    backgroundColor: '#EDE9FE',
+    borderRadius: 10,
+    backgroundColor: '#F0EDE8',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  ratingStarActive: { backgroundColor: '#6366F1' },
-  ratingStarText: { fontSize: 15, fontWeight: '700', color: '#6366F1' },
+  ratingStarActive: { backgroundColor: '#C9A86A' },
+  ratingStarText: { fontFamily: 'Poppins_700Bold', fontSize: 15, color: '#9C8C84' },
   ratingStarTextActive: { color: '#fff' },
   input: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FDFBF7',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: 'rgba(74,64,58,0.12)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
+    color: '#4A403A',
     marginBottom: 12,
   },
   textArea: { minHeight: 60, textAlignVertical: 'top' },
@@ -418,29 +452,29 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     paddingVertical: 11,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    backgroundColor: '#F0EDE8',
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#6B7280', fontWeight: '600' },
+  cancelBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#9C8C84' },
   confirmWornBtn: {
     flex: 2,
     paddingVertical: 11,
-    borderRadius: 8,
-    backgroundColor: '#6366F1',
+    borderRadius: 10,
+    backgroundColor: '#C9A86A',
     alignItems: 'center',
   },
-  confirmWornBtnDisabled: { backgroundColor: '#A5B4FC' },
-  confirmWornBtnText: { color: '#fff', fontWeight: '700' },
-  errorText: { color: '#EF4444', fontSize: 13, marginBottom: 8 },
+  confirmWornBtnDisabled: { backgroundColor: 'rgba(201,168,106,0.4)' },
+  confirmWornBtnText: { fontFamily: 'Poppins_700Bold', color: '#fff' },
+  errorText: { fontFamily: 'Poppins_400Regular', color: '#EF4444', fontSize: 13, marginBottom: 8 },
   deleteBtn: {
     marginTop: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 13,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#FCA5A5',
     alignItems: 'center',
   },
-  deleteBtnText: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
-  linkText: { color: '#6366F1', fontSize: 14 },
+  deleteBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#EF4444', fontSize: 14 },
+  linkText: { fontFamily: 'Poppins_500Medium', color: '#C9A86A', fontSize: 14 },
 });

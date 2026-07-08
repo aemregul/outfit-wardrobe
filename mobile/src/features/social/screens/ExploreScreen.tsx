@@ -7,6 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { QUERY_KEYS } from '../../../shared/constants/queryKeys';
 import { PostCard } from '../components/PostCard';
 import { useInfiniteExplore, useLikePost, useUnlikePost } from '../hooks/useSocial';
@@ -17,6 +23,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function ExploreScreen() {
   const navigation = useNavigation<Nav>();
   const queryClient = useQueryClient();
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_700Bold });
 
   useFocusEffect(
     useCallback(() => {
@@ -49,12 +56,14 @@ export function ExploreScreen() {
   const renderFooter = useCallback(() => (
     <View style={styles.footer}>
       {isFetchingNextPage
-        ? <ActivityIndicator size="small" color="#6366F1" />
+        ? <ActivityIndicator size="small" color="#C9A86A" />
         : !hasNextPage && posts.length > 0
           ? <Text style={styles.footerText}>Tüm sonuçlar yüklendi</Text>
           : null}
     </View>
   ), [isFetchingNextPage, hasNextPage, posts.length]);
+
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
 
   const ListHeader = <Text style={styles.title}>Keşfet</Text>;
 
@@ -63,7 +72,7 @@ export function ExploreScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.headerPad}>{ListHeader}</View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       </SafeAreaView>
     );
@@ -123,16 +132,16 @@ export function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   list: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 32 },
   headerPad: { paddingHorizontal: 16, paddingTop: 16, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1E1B4B', marginBottom: 12 },
+  title: { fontFamily: 'Poppins_700Bold', fontSize: 22, color: '#4A403A', marginBottom: 12 },
   footer: { paddingVertical: 16, alignItems: 'center' },
-  footerText: { fontSize: 12, color: '#9CA3AF' },
+  footerText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 24 },
   emptyEmoji: { fontSize: 48 },
-  emptyText: { fontSize: 16, color: '#6B7280', fontWeight: '500' },
-  errorText: { fontSize: 15, color: '#EF4444' },
-  retryText: { fontSize: 14, color: '#6366F1', textDecorationLine: 'underline' },
+  emptyText: { fontFamily: 'Poppins_500Medium', fontSize: 16, color: '#9C8C84' },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  retryText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A', textDecorationLine: 'underline' },
 });

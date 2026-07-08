@@ -7,6 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { QUERY_KEYS } from '../../../shared/constants/queryKeys';
 import { useInfiniteWearLogs } from '../hooks/useWearLogs';
 import { WearLogResponse } from '../../../shared/types/outfit.types';
@@ -76,6 +83,7 @@ function WearLogCard({ item, onPress }: { item: WearLogResponse; onPress: () => 
 export function WearLogListScreen() {
   const navigation = useNavigation<Nav>();
   const queryClient = useQueryClient();
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   useFocusEffect(
     useCallback(() => {
@@ -146,12 +154,14 @@ export function WearLogListScreen() {
   const renderFooter = useCallback(() => (
     <View style={styles.footer}>
       {isFetchingNextPage
-        ? <ActivityIndicator size="small" color="#6366F1" />
+        ? <ActivityIndicator size="small" color="#C9A86A" />
         : !hasNextPage && allItems.length > 0
           ? <Text style={styles.footerText}>Tüm sonuçlar yüklendi</Text>
           : null}
     </View>
   ), [isFetchingNextPage, hasNextPage, allItems.length]);
+
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
 
   const ListHeader = (
     <View>
@@ -162,7 +172,7 @@ export function WearLogListScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Etkinlik, lokasyon veya tarih ara..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#C4B8AF"
       />
 
       <View style={styles.filtersSection}>
@@ -218,7 +228,7 @@ export function WearLogListScreen() {
 
       {isLoading && (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       )}
 
@@ -284,82 +294,87 @@ export function WearLogListScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   list: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1E1B4B', marginBottom: 16 },
+  title: { fontFamily: 'Poppins_700Bold', fontSize: 22, color: '#4A403A', marginBottom: 16 },
   outfitBtn: {
-    backgroundColor: '#EDE9FE',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#1F1F1F',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
     marginTop: 4,
   },
-  outfitBtnText: { color: '#6366F1', fontWeight: '600', fontSize: 13 },
+  outfitBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#fff', fontSize: 13 },
   searchInput: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
+    borderColor: 'rgba(74,64,58,0.12)',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
+    color: '#4A403A',
     marginBottom: 16,
   },
   filtersSection: { marginBottom: 12 },
-  filterLabel: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginTop: 10, marginBottom: 6 },
-  chipRow: { flexDirection: 'row', gap: 8, paddingBottom: 4, flexWrap: 'wrap' },
-  chip: {
-    backgroundColor: '#EDE9FE',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  filterLabel: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    color: '#9C8C84',
+    marginTop: 10,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
-  chipActive: { backgroundColor: '#6366F1' },
-  chipText: { fontSize: 12, color: '#6366F1', fontWeight: '500' },
+  chipRow: { flexDirection: 'row', gap: 8, paddingBottom: 4, flexWrap: 'wrap' },
+  chip: { backgroundColor: '#F0EDE8', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  chipActive: { backgroundColor: '#C9A86A' },
+  chipText: { fontFamily: 'Poppins_500Medium', fontSize: 12, color: '#9C8C84' },
   chipTextActive: { color: '#fff' },
   clearBtn: {
     alignSelf: 'flex-start',
     marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#6366F1',
+    borderColor: '#C9A86A',
   },
-  clearBtnText: { color: '#6366F1', fontSize: 13, fontWeight: '600' },
-  countText: { fontSize: 12, color: '#9CA3AF', marginBottom: 12 },
+  clearBtnText: { fontFamily: 'Poppins_600SemiBold', color: '#C9A86A', fontSize: 13 },
+  countText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84', marginBottom: 12 },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
     elevation: 2,
   },
   dateCol: { alignItems: 'center', minWidth: 42, marginRight: 4 },
-  dateDay: { fontSize: 22, fontWeight: '700', color: '#6366F1', lineHeight: 26 },
-  dateMonth: { fontSize: 11, fontWeight: '600', color: '#6B7280', textTransform: 'uppercase' },
-  dateYear: { fontSize: 10, color: '#9CA3AF' },
-  divider: { width: 1, height: 48, backgroundColor: '#E5E7EB', marginHorizontal: 14 },
+  dateDay: { fontFamily: 'Poppins_700Bold', fontSize: 22, color: '#C9A86A', lineHeight: 26 },
+  dateMonth: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: '#9C8C84', textTransform: 'uppercase' },
+  dateYear: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: '#C4B8AF' },
+  divider: { width: 1, height: 48, backgroundColor: 'rgba(74,64,58,0.10)', marginHorizontal: 14 },
   content: { flex: 1 },
   occasionBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#F0EDE8',
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 10,
     marginBottom: 6,
   },
-  occasionText: { fontSize: 12, color: '#6366F1', fontWeight: '600' },
+  occasionText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: '#9C8C84' },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginBottom: 4 },
-  metaItem: { fontSize: 12, color: '#6B7280' },
+  metaItem: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84' },
   wearAgainBadge: {
     backgroundColor: '#D1FAE5',
     paddingHorizontal: 8,
@@ -367,19 +382,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   wearAgainNo: { backgroundColor: '#FEE2E2' },
-  wearAgainText: { fontSize: 11, color: '#065F46', fontWeight: '600' },
+  wearAgainText: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: '#065F46' },
   wearAgainNoText: { color: '#991B1B' },
   starsRow: { flexDirection: 'row', gap: 2, marginBottom: 4 },
-  star: { fontSize: 14, color: '#D1D5DB' },
-  starFilled: { color: '#FBBF24' },
-  note: { fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' },
-  arrow: { fontSize: 22, color: '#C7D2FE', marginLeft: 8 },
+  star: { fontSize: 14, color: '#E8DCC8' },
+  starFilled: { color: '#C9A86A' },
+  note: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84', fontStyle: 'italic' },
+  arrow: { fontFamily: 'Poppins_400Regular', fontSize: 22, color: '#D4BC8C', marginLeft: 8 },
   footer: { paddingVertical: 16, alignItems: 'center' },
-  footerText: { fontSize: 12, color: '#9CA3AF' },
+  footerText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#9C8C84' },
   center: { justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 40 },
   emptyEmoji: { fontSize: 48 },
-  emptyText: { fontSize: 16, color: '#6B7280', fontWeight: '500' },
-  emptyHint: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 32 },
-  errorText: { fontSize: 15, color: '#EF4444' },
-  retryText: { fontSize: 14, color: '#6366F1', textDecorationLine: 'underline' },
+  emptyText: { fontFamily: 'Poppins_500Medium', fontSize: 16, color: '#9C8C84' },
+  emptyHint: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#C4B8AF', textAlign: 'center', paddingHorizontal: 32 },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  retryText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A', textDecorationLine: 'underline' },
 });

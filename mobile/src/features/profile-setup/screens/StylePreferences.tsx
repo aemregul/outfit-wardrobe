@@ -52,15 +52,15 @@ type Gender = 'kadin' | 'erkek';
 type StyleKey = keyof typeof STYLE_IMAGES.kadin;
 
 const STYLE_OPTIONS: { key: StyleKey; label: string }[] = [
-  { key: 'casual', label: 'Casual (Gündelik)' },
+  { key: 'casual', label: 'Gündelik' },
   { key: 'streetwear', label: 'Streetwear' },
   { key: 'sportif', label: 'Sportif' },
-  { key: 'smartCasual', label: 'Smart Casual' },
+  { key: 'smartCasual', label: 'Şık Gündelik' },
   { key: 'business', label: 'Business / Ofis' },
   { key: 'minimalist', label: 'Minimalist' },
-  { key: 'dateNight', label: 'Date Night' },
+  { key: 'dateNight', label: 'Gece Çıkışı' },
   { key: 'vintage', label: 'Vintage' },
-  { key: 'luxury', label: 'Luxury' },
+  { key: 'luxury', label: 'Lüks' },
 ];
 
 type StylePreferencesProps = {

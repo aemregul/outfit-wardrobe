@@ -31,9 +31,9 @@ const RECENT_ITEMS = [
 
 const QUICK_ACTIONS: { icon: React.ComponentProps<typeof Ionicons>['name'] | null; label: string; route?: string }[] = [
   { icon: 'scan-outline', label: 'Yeni Kıyafet Tara', route: 'AddClothing' },
-  { icon: 'calendar-outline', label: 'Haftayı Planla' },
-  { icon: 'sparkles', label: 'AI ile Sohbet' },
-  { icon: null, label: '' },
+  { icon: 'calendar-outline', label: 'Haftayı Planla', route: 'Planner' },
+  { icon: 'sparkles', label: 'AI ile Sohbet', route: 'AIChat' },
+  { icon: 'body-outline', label: 'Giysi Deneme', route: 'VirtualTryOn' },
 ];
 
 function WeatherPill({ onPress }: { onPress: () => void }) {
@@ -106,7 +106,7 @@ export function HomeScreen() {
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.styleBadge}>
-          <Text style={styles.styleBadgeText}>Luxury</Text>
+          <Text style={styles.styleBadgeText}>Lüks</Text>
         </View>
         <View style={styles.outfitInfo}>
           <View style={styles.outfitTextWrap}>

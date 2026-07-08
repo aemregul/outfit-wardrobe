@@ -6,6 +6,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { useGenerateOutfit } from '../hooks/useOutfits';
 import { OUTFIT_SEASONS, SEASON_LABELS } from '../../../shared/types/outfit.types';
 import type { RootStackParamList } from '../../../app/navigation/types';
@@ -16,6 +24,7 @@ const OCCASION_OPTIONS = ['Günlük', 'İş', 'Akşam Yemeği', 'Düğün', 'Spo
 
 export function GenerateOutfitScreen() {
   const navigation = useNavigation<Nav>();
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
   const { mutate: generate, isPending } = useGenerateOutfit();
 
   const [occasion, setOccasion] = useState('');
@@ -49,6 +58,8 @@ export function GenerateOutfitScreen() {
     );
   }
 
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -57,8 +68,8 @@ export function GenerateOutfitScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtn}>← Geri</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={20} color="#4A403A" />
           </TouchableOpacity>
           <Text style={styles.title}>AI Kombin Oluştur</Text>
         </View>
@@ -90,7 +101,7 @@ export function GenerateOutfitScreen() {
             value={occasion}
             onChangeText={setOccasion}
             placeholder="Veya kendiniz yazın..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#C4B8AF"
           />
         </View>
 
@@ -137,51 +148,64 @@ export function GenerateOutfitScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   scroll: { flex: 1 },
-  container: { padding: 16, paddingBottom: 48 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
-  title: { fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
+  container: { padding: 20, paddingBottom: 48 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 24 },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  title: { fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#4A403A' },
   infoCard: {
-    backgroundColor: '#EDE9FE',
-    borderRadius: 10,
+    backgroundColor: '#F0EDE8',
+    borderRadius: 14,
     padding: 16,
     marginBottom: 24,
   },
-  infoText: { fontSize: 14, color: '#4338CA', lineHeight: 20 },
+  infoText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#9C8C84', lineHeight: 22 },
   field: { marginBottom: 24 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 10 },
+  label: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#4A403A', marginBottom: 10 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   chip: {
-    backgroundColor: '#EDE9FE',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#F0EDE8',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
   },
-  chipActive: { backgroundColor: '#6366F1' },
-  chipText: { fontSize: 13, color: '#6366F1', fontWeight: '500' },
+  chipActive: { backgroundColor: '#C9A86A' },
+  chipText: { fontFamily: 'Poppins_500Medium', fontSize: 13, color: '#9C8C84' },
   chipTextActive: { color: '#fff' },
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderColor: 'rgba(74,64,58,0.12)',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    color: '#111827',
+    color: '#4A403A',
   },
-  errorText: { color: '#EF4444', fontSize: 14, marginBottom: 12 },
+  errorText: { fontFamily: 'Poppins_400Regular', color: '#EF4444', fontSize: 13, marginBottom: 12 },
   generateBtn: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#1F1F1F',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 14,
     alignItems: 'center',
     marginBottom: 12,
   },
-  generateBtnDisabled: { backgroundColor: '#A5B4FC' },
-  generateBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  generateBtnDisabled: { backgroundColor: 'rgba(31,31,31,0.4)' },
+  generateBtnText: { fontFamily: 'Poppins_700Bold', color: '#fff', fontSize: 15 },
   listBtn: { alignItems: 'center', paddingVertical: 12 },
-  listBtnText: { fontSize: 14, color: '#6366F1', fontWeight: '500' },
+  listBtnText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A' },
 });

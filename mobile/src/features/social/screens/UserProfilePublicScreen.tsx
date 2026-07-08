@@ -6,6 +6,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { usePublicUser, useFollowUser, useUnfollowUser } from '../hooks/useSocial';
 import { useMe } from '../../auth/hooks/useMe';
 import type { RootStackParamList } from '../../../app/navigation/types';
@@ -21,6 +29,7 @@ export function UserProfilePublicScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const userId = params.id;
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold });
 
   const { data: profile, isLoading, isError } = usePublicUser(userId);
   const { mutate: follow, isPending: following } = useFollowUser();
@@ -39,11 +48,13 @@ export function UserProfilePublicScreen() {
     }
   }
 
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FDFBF7' }} />;
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color="#C9A86A" />
         </View>
       </SafeAreaView>
     );
@@ -55,7 +66,7 @@ export function UserProfilePublicScreen() {
         <View style={styles.center}>
           <Text style={styles.errorText}>Profil bulunamadı.</Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.linkText}>← Geri dön</Text>
+            <Text style={styles.linkText}>Geri dön</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -68,8 +79,8 @@ export function UserProfilePublicScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtn}>← Geri</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={20} color="#4A403A" />
           </TouchableOpacity>
         </View>
 
@@ -122,7 +133,7 @@ export function UserProfilePublicScreen() {
               disabled={followPending}
             >
               {followPending ? (
-                <ActivityIndicator color={profile.isFollowing ? '#6366F1' : '#fff'} size="small" />
+                <ActivityIndicator color={profile.isFollowing ? '#C9A86A' : '#fff'} size="small" />
               ) : (
                 <Text style={[
                   styles.followBtnText,
@@ -140,54 +151,75 @@ export function UserProfilePublicScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7FF' },
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
   scroll: { flex: 1 },
-  container: { padding: 16, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
 
   header: { marginBottom: 20 },
-  backBtn: { color: '#6366F1', fontSize: 15, fontWeight: '500' },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
 
   profileCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowColor: '#4A403A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 4,
   },
 
-  avatarImg: { width: 88, height: 88, borderRadius: 44, marginBottom: 14 },
+  avatarImg: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    marginBottom: 14,
+    borderWidth: 3,
+    borderColor: '#C9A86A',
+  },
   avatarFallback: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#C9A86A',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
   },
-  avatarFallbackText: { color: '#fff', fontSize: 28, fontWeight: '700' },
+  avatarFallbackText: { fontFamily: 'Poppins_700Bold', color: '#fff', fontSize: 28 },
 
-  displayName: { fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
-  username: { fontSize: 14, color: '#9CA3AF', marginTop: 2, marginBottom: 10 },
+  displayName: { fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#4A403A' },
+  username: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#9C8C84', marginTop: 2, marginBottom: 10 },
 
   privateBadge: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F0EDE8',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 8,
     marginBottom: 10,
   },
-  privateBadgeText: { fontSize: 11, color: '#6B7280', fontWeight: '600' },
+  privateBadgeText: { fontFamily: 'Poppins_500Medium', fontSize: 11, color: '#9C8C84' },
 
   bio: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 13,
-    color: '#6B7280',
+    color: '#9C8C84',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 20,
     marginBottom: 16,
     paddingHorizontal: 8,
   },
@@ -199,9 +231,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statItem: { alignItems: 'center', gap: 2 },
-  statNumber: { fontSize: 20, fontWeight: '700', color: '#1E1B4B' },
-  statLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '500' },
-  statDivider: { width: 1, height: 32, backgroundColor: '#E5E7EB' },
+  statNumber: { fontFamily: 'Poppins_700Bold', fontSize: 20, color: '#C9A86A' },
+  statLabel: { fontFamily: 'Poppins_500Medium', fontSize: 11, color: '#9C8C84' },
+  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(74,64,58,0.10)' },
 
   followBtn: {
     width: 200,
@@ -210,13 +242,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
   },
-  followBtnInactive: { backgroundColor: '#6366F1', borderColor: '#6366F1' },
-  followBtnActive: { backgroundColor: '#fff', borderColor: '#6366F1' },
-  followBtnPending: { opacity: 0.7 },
-  followBtnText: { fontSize: 15, fontWeight: '700' },
+  followBtnInactive: { backgroundColor: '#1F1F1F', borderColor: '#1F1F1F' },
+  followBtnActive: { backgroundColor: '#fff', borderColor: '#C9A86A' },
+  followBtnPending: { opacity: 0.6 },
+  followBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
   followBtnTextInactive: { color: '#fff' },
-  followBtnTextActive: { color: '#6366F1' },
+  followBtnTextActive: { color: '#C9A86A' },
 
-  errorText: { fontSize: 15, color: '#EF4444' },
-  linkText: { color: '#6366F1', fontSize: 14 },
+  errorText: { fontFamily: 'Poppins_500Medium', fontSize: 15, color: '#EF4444' },
+  linkText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#C9A86A' },
 });
