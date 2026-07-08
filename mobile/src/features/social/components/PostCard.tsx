@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { PostResponse, VISIBILITY_ICONS } from '../../../shared/types/social.types';
-import { formatDate } from '../../../shared/utils/date';
+import {
+  View, Text, Image, TouchableOpacity, StyleSheet,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
+import { PostResponse } from '../../../shared/types/social.types';
 
 interface Props {
   post: PostResponse;
   onPress: () => void;
   onLike: (id: string) => void;
   onUnlike: (id: string) => void;
-  onViewOutfit?: (outfitId: string) => void;
+  onViewOutfit?: (outfitId: string, imageUrl: string, caption?: string, username?: string) => void;
   onAuthorPress?: (userId: string) => void;
-}
-
-function shortId(id: string) {
-  return id.slice(0, 8).toUpperCase();
+  onComments?: (postId: string) => void;
 }
 
 function authorLabel(post: PostResponse): string {
-  return post.displayName ?? post.username ?? `Kullanıcı #${shortId(post.userId)}`;
+  return post.displayName ?? post.username ?? 'kullanici';
 }
 
 function avatarInitial(post: PostResponse): string {
@@ -25,36 +30,67 @@ function avatarInitial(post: PostResponse): string {
   return label[0].toUpperCase();
 }
 
-export function PostCard({ post, onPress, onLike, onUnlike, onViewOutfit, onAuthorPress }: Props) {
-  const [imgError, setImgError] = useState(false);
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'az önce';
+  if (m < 60) return `${m} dk önce`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} sa önce`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d} gün önce`;
+  return new Date(dateStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+}
 
-  function handleLikeToggle() {
-    if (post.likedByCurrentUser) {
+export function PostCard({ post, onPress, onLike, onUnlike, onViewOutfit, onAuthorPress, onComments }: Props) {
+  const [imgError, setImgError]   = useState(false);
+  const [saved, setSaved]         = useState(false);
+  const [liked, setLiked]         = useState(post.likedByCurrentUser);
+  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [fontsLoaded] = useFonts({ Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold });
+
+  if (!fontsLoaded) return null;
+
+  const handleLike = () => {
+    if (liked) {
       onUnlike(post.id);
+      setLiked(false);
+      setLikesCount(c => Math.max(0, c - 1));
     } else {
       onLike(post.id);
+      setLiked(true);
+      setLikesCount(c => c + 1);
     }
-  }
+  };
 
   return (
     <View style={styles.card}>
+      {/* ── Üst: Kullanıcı bilgisi ── */}
       <TouchableOpacity
-        style={styles.cardHeader}
+        style={styles.header}
+        activeOpacity={onAuthorPress ? 0.7 : 1}
         onPress={onAuthorPress ? () => onAuthorPress(post.userId) : undefined}
         disabled={!onAuthorPress}
-        activeOpacity={onAuthorPress ? 0.7 : 1}
       >
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{avatarInitial(post)}</Text>
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{avatarInitial(post)}</Text>
+          </View>
         </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.userId}>{authorLabel(post)}</Text>
-          <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
+          <Text style={styles.username}>{authorLabel(post)}</Text>
+          <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>
         </View>
-        <Text style={styles.visibilityIcon}>{VISIBILITY_ICONS[post.visibility]}</Text>
+        <TouchableOpacity style={styles.followBtn} activeOpacity={0.8}>
+          <Text style={styles.followBtnText}>Takip Et</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.moreBtn} activeOpacity={0.7}>
+          <Ionicons name="ellipsis-horizontal" size={18} color="#9C8C84" />
+        </TouchableOpacity>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onPress} activeOpacity={0.95}>
+      {/* ── Fotoğraf ── */}
+      <TouchableOpacity onPress={onPress} activeOpacity={0.97}>
         {!imgError ? (
           <Image
             source={{ uri: post.imageUrl }}
@@ -64,41 +100,81 @@ export function PostCard({ post, onPress, onLike, onUnlike, onViewOutfit, onAuth
           />
         ) : (
           <View style={styles.imageFallback}>
-            <Text style={styles.imageFallbackText}>📷</Text>
-            <Text style={styles.imageFallbackHint}>Görsel yüklenemedi</Text>
+            <Ionicons name="image-outline" size={40} color="#C9A86A" />
+            <Text style={styles.imageFallbackText}>Görsel yüklenemedi</Text>
           </View>
         )}
       </TouchableOpacity>
 
-      <View style={styles.body}>
-        {post.caption ? (
-          <Text style={styles.caption} numberOfLines={3}>{post.caption}</Text>
-        ) : null}
-
-        {post.outfitId && onViewOutfit ? (
+      {/* ── Aksiyonlar ── */}
+      <View style={styles.actions}>
+        <View style={styles.actionsLeft}>
           <TouchableOpacity
-            style={styles.outfitChip}
-            onPress={() => onViewOutfit(post.outfitId!)}
+            style={styles.actionBtn}
+            activeOpacity={0.7}
+            onPress={handleLike}
           >
-            <Text style={styles.outfitChipText}>Kombini Gör</Text>
+            <Ionicons
+              name={liked ? 'heart' : 'heart-outline'}
+              size={24}
+              color={liked ? '#E74C3C' : '#4A403A'}
+            />
           </TouchableOpacity>
-        ) : null}
-
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={handleLikeToggle}>
-            <Text style={[styles.likeIcon, post.likedByCurrentUser && styles.likeIconActive]}>
-              {post.likedByCurrentUser ? '♥' : '♡'}
-            </Text>
-            <Text style={[styles.actionCount, post.likedByCurrentUser && styles.actionCountActive]}>
-              {post.likesCount}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionBtn} onPress={onPress}>
-            <Text style={styles.commentIcon}>💬</Text>
-            <Text style={styles.actionCount}>{post.commentsCount}</Text>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            activeOpacity={0.7}
+            onPress={() => onComments ? onComments(post.id) : onPress()}
+          >
+            <Ionicons name="chatbubble-outline" size={22} color="#4A403A" />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          activeOpacity={0.7}
+          onPress={() => setSaved(s => !s)}
+        >
+          <Ionicons
+            name={saved ? 'bookmark' : 'bookmark-outline'}
+            size={22}
+            color={saved ? '#C9A86A' : '#4A403A'}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── İçerik ── */}
+      <View style={styles.body}>
+        {likesCount > 0 && (
+          <Text style={styles.likesCount}>{likesCount.toLocaleString('tr-TR')} beğeni</Text>
+        )}
+
+        {post.caption ? (
+          <Text style={styles.caption} numberOfLines={3}>
+            <Text style={styles.captionUsername}>{authorLabel(post)} </Text>
+            {post.caption}
+          </Text>
+        ) : null}
+
+        {post.outfitId && onViewOutfit && (
+          <TouchableOpacity
+            style={styles.outfitChip}
+            activeOpacity={0.8}
+            onPress={() => onViewOutfit(post.outfitId!, post.imageUrl, post.caption, post.displayName ?? post.username)}
+          >
+            <Ionicons name="shirt-outline" size={12} color="#C9A86A" />
+            <Text style={styles.outfitChipText}>Kombini Gör</Text>
+          </TouchableOpacity>
+        )}
+
+        {post.commentsCount > 0 && (
+          <TouchableOpacity
+            onPress={() => onComments ? onComments(post.id) : onPress()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.commentsLink}>
+              {post.commentsCount} yorumun tamamını gör
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -106,72 +182,150 @@ export function PostCard({ post, onPress, onLike, onUnlike, onViewOutfit, onAuth
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
+    shadowColor: '#959595',
+    shadowOffset: { width: 4, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
     elevation: 3,
   },
-  cardHeader: {
+
+  // Header
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 10,
   },
+  avatarWrap: {
+    borderWidth: 2,
+    borderColor: '#C9A86A',
+    borderRadius: 9999,
+    padding: 2,
+  },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#6366F1',
-    justifyContent: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#4A403A',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  avatarText: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+    color: '#FFFFFF',
+  },
   headerInfo: { flex: 1 },
-  userId: { fontSize: 13, fontWeight: '600', color: '#1E1B4B' },
-  date: { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
-  visibilityIcon: { fontSize: 16 },
-  image: { width: '100%', height: 280 },
-  imageFallback: {
-    height: 160,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
+  username: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+    color: '#4A403A',
+    lineHeight: 18,
   },
-  imageFallbackText: { fontSize: 40 },
-  imageFallbackHint: { fontSize: 12, color: '#6B7280' },
-  body: { padding: 14 },
-  caption: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-    marginBottom: 10,
+  time: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 10,
+    color: '#9C8C84',
+    lineHeight: 14,
   },
-  outfitChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#EDE9FE',
+  followBtn: {
+    borderWidth: 1.5,
+    borderColor: '#C9A86A',
+    borderRadius: 9999,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: 4,
   },
-  outfitChipText: { fontSize: 12, color: '#6366F1', fontWeight: '600' },
+  followBtnText: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    color: '#C9A86A',
+  },
+  moreBtn: {
+    padding: 4,
+  },
+
+  // Image
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  imageFallback: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#F5F0E8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  imageFallbackText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
+    color: '#9C8C84',
+  },
+
+  // Actions
   actions: {
     flexDirection: 'row',
-    gap: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
     paddingTop: 10,
-    marginTop: 2,
+    paddingBottom: 4,
   },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  likeIcon: { fontSize: 20, color: '#9CA3AF' },
-  likeIconActive: { color: '#EF4444' },
-  commentIcon: { fontSize: 18 },
-  actionCount: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  actionCountActive: { color: '#EF4444' },
+  actionsLeft: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  actionBtn: {
+    padding: 4,
+  },
+
+  // Body
+  body: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    gap: 6,
+  },
+  likesCount: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+    color: '#4A403A',
+  },
+  caption: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
+    color: '#4A403A',
+    lineHeight: 20,
+  },
+  captionUsername: {
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#4A403A',
+  },
+  outfitChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(201,168,106,0.12)',
+    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,106,0.3)',
+  },
+  outfitChipText: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    color: '#C9A86A',
+  },
+  commentsLink: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    color: '#9C8C84',
+  },
 });
